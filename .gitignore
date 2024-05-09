@@ -98,6 +98,9 @@ StyleCopReport.xml
 *.svclog
 *.scc
 
+# Make exception for examples folder
+!examples/**/*.obj
+
 # Chutzpah Test files
 _Chutzpah*
 
