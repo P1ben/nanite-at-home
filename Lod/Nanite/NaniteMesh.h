@@ -366,7 +366,7 @@ public:
 				}
 			}
 
-			// Set Children
+			// Set Child Siblings
 			std::getline(config, line);
 			{
 				CLUSTER_ID temp;
@@ -394,13 +394,22 @@ public:
 				clusters[i].SetRoot(temp ? true : false);
 			}
 
-			// Set Children
+			// Set Center
 			std::getline(config, line);
 			{
 				vec3 temp;
 				std::istringstream iss(line);
 				iss >> temp.x >> temp.y >> temp.z;
 				clusters[i].SetCenter(temp);
+			}
+
+			// Set error value
+			std::getline(config, line);
+			{
+				float temp;
+				std::istringstream iss(line);
+				iss >> temp;
+				clusters[i].SetError(temp);
 			}
 		}
 
@@ -739,12 +748,17 @@ public:
 			clusters[cli_a].SetId(cluster_count++);
 			clusters[cli_b].SetId(cluster_count++);
 
+			// Setting error for new clusters
+			clusters[cli_a].SetError(clstr.GetError());
+			clusters[cli_b].SetError(clstr.GetError());
+
 			OMesh& cl_mesh = clstr.GetInnerMesh();
 
 			// Dividing cluster to 2 parts
 			auto parts = GraphPartitioner::PartitionMesh(cl_mesh, 2);
 
 			printf("-Finalize Clusters Separation Part-\n");
+
 			// Sorting triangles
 			int i = 0;
 			for (OMesh::FaceIter fi = cl_mesh.faces_begin(); fi != cl_mesh.faces_end(); ++fi) {

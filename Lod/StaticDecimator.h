@@ -106,9 +106,10 @@ private:
 public:
 
 	// Simplifies cluster, removes triagles so that the triangle count decreases to max_ratio of original
-	static void DecimateCluster(OMesh& cluster_mesh, float max_ratio) {
+	// Returns: introduced error sum for cluster
+	static float DecimateCluster(OMesh& cluster_mesh, float max_ratio) {
 		using namespace OpenMesh;
-
+		
 		cluster_mesh.request_edge_status();
 		cluster_mesh.request_halfedge_status();
 		cluster_mesh.request_vertex_status();
@@ -136,6 +137,7 @@ public:
 		}
 
 		int deleted_count = 0;
+		float introduced_error = 0.f;
 
 		while (edges_set.size() != 0 && deleted_count < max_faces_to_remove) {
 			EdgeHandle to_be_deleted = *edges_set.begin();
@@ -147,6 +149,7 @@ public:
 				VertexHandle   del_vh = cluster_mesh.to_vertex_handle(cluster_mesh.opposite_halfedge_handle(hh));
 
 				cluster_mesh.set_point(rem_vh, GetNewPointByQEF2OMesh(cluster_mesh, rem_vh, del_vh, 0.002f));
+				introduced_error += cluster_mesh.data(cluster_mesh.edge_handle(hh)).error();
 				cluster_mesh.collapse(hh);
 
 				for (OMesh::VertexFaceIter vfi(cluster_mesh.vf_begin(rem_vh)); vfi.is_valid(); ++vfi) {
@@ -165,12 +168,15 @@ public:
 			}
 		}
 		cluster_mesh.garbage_collection();
+		return introduced_error;
 	}
 
-	static void DecimateClusterUntil(OMesh& cluster_mesh, uint32_t max_triangle_count) {
+	// Decimates cluster faces until a given facecount is reached
+	// Returns: introduced error sum
+	static float DecimateClusterUntil(OMesh& cluster_mesh, uint32_t max_triangle_count) {
 		int   triangle_count   = cluster_mesh.n_faces();
 		float decimation_ratio = (float)max_triangle_count / triangle_count;
 
-		DecimateCluster(cluster_mesh, decimation_ratio);
+		return DecimateCluster(cluster_mesh, decimation_ratio);
 	}
 };

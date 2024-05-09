@@ -34,6 +34,8 @@ class Cluster {
 	float childsib_area = 0.0f;
 	float childsib_triangle_density = 0.0f;
 
+	float error = 0.f;
+
 	float camera_last_dist = 0.f;
 
 	vec3 color;
@@ -84,6 +86,7 @@ public:
 	}
 
 	void Append(Cluster& cluster) {
+		this->error += cluster.error;
 		for (OMesh::FaceIter fi_other(cluster.inner_mesh.faces_begin()); fi_other != cluster.inner_mesh.faces_end(); ++fi_other) {
 			this->CopyTriangle(cluster.inner_mesh, *fi_other);
 		}
@@ -91,7 +94,9 @@ public:
 
 	void Simplify() {
 		//StaticDecimator::DecimateCluster(inner_mesh, 0.5f);
-		StaticDecimator::DecimateClusterUntil(inner_mesh, 256);
+
+		// Decimate cluster until given value and update error
+		error += StaticDecimator::DecimateClusterUntil(inner_mesh, 256);
 	}
 
 	const virtual std::vector<Vertex> GetVertices() {
@@ -128,12 +133,14 @@ public:
 			return true;
 		}
 
-		float calc_metric = 1 / metric * 1080;
+		//float calc_metric = 1 / metric * 1080;
+		float calc_metric = metric * metric / 2000;
 
 		if (id > 1550) {
-			printf("\tCluster %d: Metric: %f Current: %f\n", id, calc_metric, childsib_triangle_density);
+			printf("\tCluster %d: Metric: %f Current: %f\n", id, calc_metric, error);
 		}
-		return childsib_triangle_density > calc_metric;
+		/*return childsib_triangle_density > calc_metric;*/
+		return error < calc_metric;
 	}
 
 	LodDecision IsUpdateRequired(float center_distance_from_camera) {
@@ -294,6 +301,14 @@ public:
 		upper_distance_boundary = boundary;
 	}
 
+	float GetError() {
+		return error;
+	}
+
+	void SetError(float _error) {
+		error = _error;
+	}
+
 	void AddParent(CLUSTER_ID parent_id) {
 		if (std::find(_parents.begin(), _parents.end(), parent_id) == _parents.end())
 			_parents.push_back(parent_id);
@@ -433,29 +448,42 @@ public:
 			return;
 		}
 
+		// Save parent ids
 		fprintf(config_file, "%u\n", id);
 		for (int i = 0; i < _parents.size(); i++) {
 			fprintf(config_file, "%u ", _parents[i]);
 		}
 		fprintf(config_file, "\n");
 
+		// Save parental siblings ids
 		for (int i = 0; i < _parental_siblings.size(); i++) {
 			fprintf(config_file, "%u ", _parental_siblings[i]);
 		}
 		fprintf(config_file, "\n");
 
+		// Save children ids
 		for (int i = 0; i < _children.size(); i++) {
 			fprintf(config_file, "%u ", _children[i]);
 		}
 		fprintf(config_file, "\n");
 
+		// Save child siblings ids
 		for (int i = 0; i < _child_siblings.size(); i++) {
 			fprintf(config_file, "%u ", _child_siblings[i]);
 		}
 		fprintf(config_file, "\n");
+
+		// Save is_leaf
 		fprintf(config_file, "%u\n", (is_leaf ? 1U : 0U));
+
+		// Save is_root
 		fprintf(config_file, "%u\n", (is_root ? 1U : 0U));
+		
+		// Save center point
 		fprintf(config_file, "%f %f %f\n", center.x, center.y, center.z);
+
+		// Save error value
+		fprintf(config_file, "%f\n", error);
 	}
 
 	void Load(const std::string& file_path) {

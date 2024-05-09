@@ -180,39 +180,46 @@ void Initialization() {
     //humanoid_mesh = new StaticMesh("ment\\output8.obj");
     // 
 
+    //////////// Generate nanite mesh from static mesh ///////////
+    /*humanoid_mesh = new StaticMesh("dragon.obj");
+    Decimator2 dm2(humanoid_mesh);
 
+    PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
+        nanite_mesh = dm2.GetNaniteMesh();
+    })
+
+    PRINT_TIME_TAKEN("Generating Nanite Mesh:", {
+        nanite_mesh->Generate();
+    })
+    
+    nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
+
+    PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
+        nanite_mesh->Save(std::string("real_nanite_mesh"));
+    })
+
+    printf("Done\n");*/
+    /////////////////////////////////////////////////////////////
+
+    //////// Render loaded mesh /////////
     PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
         nanite_mesh = new NaniteMesh("real_nanite_mesh");
     })
-    //humanoid_mesh = new StaticMesh("dragon.obj");
-
-    //lod_meshes.push_back(humanoid_mesh);
-    //Decimator2 dm2(humanoid_mesh);
-
-    //NaniteMesh* nanite_mesh;
-    //PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
-    //    nanite_mesh = dm2.GetNaniteMesh();
-    //})
-
-    //PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
-    //    nanite_mesh->Generate();
-    //})
+    
     PRINT_TIME_TAKEN("Setting Step Boundaries:", {
         nanite_mesh->SetChangeStepForClusters(10.2312423f);
     })
 
     lod_meshes.push_back(nanite_mesh);
+    /////////////////////////////////////
 
-    //nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
 
     //NaniteMesh* nanite_mesh_small;
     //PRINT_TIME_TAKEN("Grouping Clusters:", {
     //    nanite_mesh_small = nanite_mesh->GroupClusters(4);
     //})
 
-    //PRINT_TIME_TAKEN("Saving Nanite Mesh Small:", {
-    //    nanite_mesh->Save(std::string("real_nanite_mesh"));
-    //})
+
 
     //PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
     //    lod_meshes.push_back(new NaniteMesh(std::string("nanite_mesh")));
