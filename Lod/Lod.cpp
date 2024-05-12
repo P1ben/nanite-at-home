@@ -171,7 +171,8 @@ void Initialization() {
     faces.push_back({ 0, 1, 2 });
     faces.push_back({ 1, 2, 3 });
 
-    shader = new Shader("shaders/test.vxshader", "shaders/test.fgshader");
+    //shader = new Shader("shaders/test-vx.glsl", "shaders/test-fg.glsl");
+    shader = new Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
 
 
     //humanoid_mesh = OBJParser::Parse("humanoid.obj");

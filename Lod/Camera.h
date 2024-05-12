@@ -127,7 +127,9 @@ public:
 			obj->UpdateModelMVP(view_mat, project_mat);
 
 			if (camera) {
-				obj->UpdateMesh(camera->GetWorldPosition());
+				vec3 camera_pos = camera->GetWorldPosition();
+				obj->UpdateMesh(camera_pos);
+				obj->UpdateCameraPosition(camera_pos);
 			}
 		}
 	}

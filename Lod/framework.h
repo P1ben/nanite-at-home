@@ -286,6 +286,64 @@ inline mat4 ViewMatrixa(vec3& eye_pos, vec3& target_pos, vec3& up_dir) {
 	return view;
 }
 
+inline mat4 Invert(mat4& matrix) {
+	float a00 = matrix[0][0];
+	float a01 = matrix[0][1];
+	float a02 = matrix[0][2];
+	float a03 = matrix[0][3];
+	float m000 = matrix[1][0];
+	float m001 = matrix[1][1];
+	float m002 = matrix[1][2];
+	float m003 = matrix[1][3];
+	float m100 = matrix[2][0];
+	float m101 = matrix[2][1];
+	float m102 = matrix[2][2];
+	float m103 = matrix[2][3];
+	float m200 = matrix[3][0];
+	float m201 = matrix[3][1];
+	float m202 = matrix[3][2];
+	float m203 = matrix[3][3];
+	float b00 = a00 * m001 - a01 * m000;
+	float b01 = a00 * m002 - a02 * m000;
+	float b02 = a00 * m003 - a03 * m000;
+	float b03 = a01 * m002 - a02 * m001;
+	float b04 = a01 * m003 - a03 * m001;
+	float b05 = a02 * m003 - a03 * m002;
+	float b06 = m100 * m201 - m101 * m200;
+	float b07 = m100 * m202 - m102 * m200;
+	float b08 = m100 * m203 - m103 * m200;
+	float b09 = m101 * m202 - m102 * m201;
+	float m010 = m101 * m203 - m103 * m201;
+	float m011 = m102 * m203 - m103 * m202;
+	float det =
+		(b00 * m011 - b01 * m010 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
+	if (det == 0.0f) {
+		return matrix;
+	}
+
+	float invDet = 1.f / det;
+
+	mat4 inv = mat4();
+	inv[0][0] = (m001 * m011 - m002 * m010 + m003 * b09) * invDet;
+	inv[0][1] = (-a01 * m011 + a02 * m010 - a03 * b09) * invDet;
+	inv[0][2] = (m201 * b05 - m202 * b04 + m203 * b03) * invDet;
+	inv[0][3] = (-m101 * b05 + m102 * b04 - m103 * b03) * invDet;
+	inv[1][0] = (-m000 * m011 + m002 * b08 - m003 * b07) * invDet;
+	inv[1][1] = (a00 * m011 - a02 * b08 + a03 * b07) * invDet;
+	inv[1][2] = (-m200 * b05 + m202 * b02 - m203 * b01) * invDet;
+	inv[1][3] = (m100 * b05 - m102 * b02 + m103 * b01) * invDet;
+	inv[2][0] = (m000 * m010 - m001 * b08 + m003 * b06) * invDet;
+	inv[2][1] = (-a00 * m010 + a01 * b08 - a03 * b06) * invDet;
+	inv[2][2] = (m200 * b04 - m201 * b02 + m203 * b00) * invDet;
+	inv[2][3] = (-m100 * b04 + m101 * b02 - m103 * b00) * invDet;
+	inv[3][0] = (-m000 * b09 + m001 * b07 - m002 * b06) * invDet;
+	inv[3][1] = (a00 * b09 - a01 * b07 + a02 * b06) * invDet;
+	inv[3][2] = (-m200 * b03 + m201 * b01 - m202 * b00) * invDet;
+	inv[3][3] = (m100 * b03 - m101 * b01 + m102 * b00) * invDet;
+
+	return inv;
+}
+
 //---------------------------
 class Texture {
 //---------------------------

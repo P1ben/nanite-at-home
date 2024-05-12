@@ -118,12 +118,20 @@ public:
 		}
 	}
 
+	void UpdateCameraPosition(vec3& camera_pos) {
+		shader_material.SetUniform("cameraPosition", camera_pos);
+	}
+
 	void UpdateModelMVP(mat4& view_mat, mat4& project_mat) {
 		mat4 MVP = project_mat * view_mat * modelMatrix;
 		vec4 pos = (vec4(0, 0, 0, 1) * MVP);
 		distance_from_camera = pos.w;
 		printf("Camera distance: %f\n", distance_from_camera);
 		shader_material.SetUniform("MVP", (project_mat * view_mat * modelMatrix));
+		shader_material.SetUniform("modelMatrix", modelMatrix);
+		shader_material.SetUniform("modelMatrixInverse", Invert(modelMatrix));
+		shader_material.SetUniform("viewMatrix", view_mat);
+		shader_material.SetUniform("projMatrix", project_mat);
 		//printf("%f\n", distance_from_camera);
 		////shader_material.SetUniform("MVP", (modelMatrix * view_mat * project_mat));
 	}
