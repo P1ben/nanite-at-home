@@ -134,13 +134,15 @@ public:
 		}
 
 		//float calc_metric = 1 / metric * 1080;
-		float calc_metric = metric * metric / 2000;
+		float calc_metric = metric * metric / 25;
 
 		if (id > 1550) {
 			printf("\tCluster %d: Metric: %f Current: %f\n", id, calc_metric, error);
 		}
 		/*return childsib_triangle_density > calc_metric;*/
-		return error < calc_metric;
+
+		// Prone to error, but looks good on dragon mesh
+		return error * childsib_triangle_density < calc_metric;
 	}
 
 	LodDecision IsUpdateRequired(float center_distance_from_camera) {
