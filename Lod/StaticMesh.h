@@ -70,6 +70,10 @@ public:
 		return vertices;
 	}
 
+	std::vector<Vertex>& GetVerticesEdit() {
+		return vertices;
+	}
+
 	const std::vector<Face>& GetFaces() override {
 		return faces;
 	}

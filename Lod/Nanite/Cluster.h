@@ -228,6 +228,52 @@ public:
 		center = sum / counter;
 	}
 
+	void FixBoundaryNormals(std::vector<Cluster>& clusters) {
+		printf("Cluster %u neighbour count: %d\n", id, neighbours.size());
+		for (OMesh::VertexIter vi_o(inner_mesh.vertices_begin()); vi_o != inner_mesh.vertices_end(); ++vi_o) {
+			if (inner_mesh.is_boundary(*vi_o)) {
+				int counter = 0;
+				for (CLUSTER_ID neig : neighbours) {
+					Cluster& neighbour = clusters[neig];
+					for (OMesh::VertexIter vi_i(neighbour.inner_mesh.vertices_begin()); vi_i != neighbour.inner_mesh.vertices_end(); ++vi_i) {
+						if (neighbour.inner_mesh.is_boundary(*vi_i)) {
+							if (inner_mesh.point(*vi_o) == neighbour.inner_mesh.point(*vi_i)) {
+								inner_mesh.set_normal(*vi_o, inner_mesh.normal(*vi_o) + neighbour.inner_mesh.normal(*vi_i));
+								counter++;
+								break;
+							}
+						}
+					}
+				}
+				if (counter > 0) {
+					inner_mesh.set_normal(*vi_o, (inner_mesh.normal(*vi_o) / counter).normalize());
+				}
+			}
+		}
+	}
+
+	void FixBoundaryNormals2(std::vector<Cluster>& clusters) {
+		printf("Cluster %u neighbour count: %d\n", id, neighbours.size());
+		auto& this_verts = inner_static_mesh.GetVerticesEdit();
+		for (auto& vert : this_verts) {
+			int counter = 0;
+			for (CLUSTER_ID neig : neighbours) {
+				Cluster& neighbour = clusters[neig];
+				auto& neig_verts = neighbour.GetVertices();
+				for (auto& nvert : neig_verts) {
+					if (vert.position == nvert.position) {
+						vert.normal = vert.normal + nvert.normal;
+						counter++;
+						break;
+					}
+				}
+			}
+			if (counter > 0) {
+				vert.normal = normalize(vert.normal / counter);
+			}
+		}
+	}
+
 	bool IsNeighbour(Cluster& neig) {
 		for (OMesh::VertexIter vi_o(inner_mesh.vertices_begin()); vi_o != inner_mesh.vertices_end(); ++vi_o) {
 			if (inner_mesh.is_boundary(*vi_o)) {
@@ -450,8 +496,16 @@ public:
 			return;
 		}
 
-		// Save parent ids
+		// Save self id
 		fprintf(config_file, "%u\n", id);
+
+		// Save neighbour ids
+		for (int i = 0; i < neighbours.size(); i++) {
+			fprintf(config_file, "%u ", neighbours[i]);
+		}
+		fprintf(config_file, "\n");
+
+		// Save parent ids
 		for (int i = 0; i < _parents.size(); i++) {
 			fprintf(config_file, "%u ", _parents[i]);
 		}

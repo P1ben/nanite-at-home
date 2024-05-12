@@ -336,6 +336,16 @@ public:
 				clusters[i].SetId(temp);
 			}
 
+			// Set Neighbours
+			std::getline(config, line);
+			{
+				CLUSTER_ID temp;
+				std::istringstream iss(line);
+				while (iss >> temp) {
+					clusters[i].AddNeighbour(temp);
+				}
+			}
+
 			// Set Parents
 			std::getline(config, line);
 			{
@@ -426,6 +436,7 @@ public:
 			if (clr.GetLeaf()) {
 				active_clusters.push_back(clr.GetId());
 			}
+			clr.FixBoundaryNormals2(clusters);
 		}
 
 		RecalculateFaceCount();

@@ -182,24 +182,24 @@ void Initialization() {
     // 
 
     //////////// Generate nanite mesh from static mesh ///////////
-    /*humanoid_mesh = new StaticMesh("dragon.obj");
-    Decimator2 dm2(humanoid_mesh);
+    //humanoid_mesh = new StaticMesh("dragon.obj");
+    //Decimator2 dm2(humanoid_mesh);
 
-    PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
-        nanite_mesh = dm2.GetNaniteMesh();
-    })
+    //PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
+    //    nanite_mesh = dm2.GetNaniteMesh();
+    //})
 
-    PRINT_TIME_TAKEN("Generating Nanite Mesh:", {
-        nanite_mesh->Generate();
-    })
-    
-    nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
+    //PRINT_TIME_TAKEN("Generating Nanite Mesh:", {
+    //    nanite_mesh->Generate();
+    //})
+    //
+    //nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
 
-    PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
-        nanite_mesh->Save(std::string("real_nanite_mesh"));
-    })
+    //PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
+    //    nanite_mesh->Save(std::string("real_nanite_mesh"));
+    //})
 
-    printf("Done\n");*/
+    //printf("Done\n");
     /////////////////////////////////////////////////////////////
 
     //////// Render loaded mesh /////////
