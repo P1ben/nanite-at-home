@@ -232,22 +232,29 @@ public:
 		printf("Cluster %u neighbour count: %d\n", id, neighbours.size());
 		for (OMesh::VertexIter vi_o(inner_mesh.vertices_begin()); vi_o != inner_mesh.vertices_end(); ++vi_o) {
 			if (inner_mesh.is_boundary(*vi_o)) {
-				int counter = 0;
+				OMesh::Normal face_normal_sum = { .0f, .0f, .0f };
+				int face_counter = 0;
+
+				for (OMesh::VertexFaceIter vf_i(inner_mesh.vf_begin(*vi_o)); vf_i != inner_mesh.vf_end(*vi_o); ++vf_i) {
+					face_normal_sum += inner_mesh.normal(*vf_i);
+					face_counter++;
+				}
+
 				for (CLUSTER_ID neig : neighbours) {
 					Cluster& neighbour = clusters[neig];
 					for (OMesh::VertexIter vi_i(neighbour.inner_mesh.vertices_begin()); vi_i != neighbour.inner_mesh.vertices_end(); ++vi_i) {
 						if (neighbour.inner_mesh.is_boundary(*vi_i)) {
 							if (inner_mesh.point(*vi_o) == neighbour.inner_mesh.point(*vi_i)) {
-								inner_mesh.set_normal(*vi_o, inner_mesh.normal(*vi_o) + neighbour.inner_mesh.normal(*vi_i));
-								counter++;
+								for (OMesh::VertexFaceIter vf_i(neighbour.inner_mesh.vf_begin(*vi_i)); vf_i != neighbour.inner_mesh.vf_end(*vi_i); ++vf_i) {
+									face_normal_sum += neighbour.inner_mesh.normal(*vf_i);
+									face_counter++;
+								}
 								break;
 							}
 						}
 					}
 				}
-				if (counter > 0) {
-					inner_mesh.set_normal(*vi_o, (inner_mesh.normal(*vi_o) / counter).normalize());
-				}
+				inner_mesh.set_normal(*vi_o, (face_normal_sum / face_counter).normalize());
 			}
 		}
 	}
@@ -255,21 +262,32 @@ public:
 	void FixBoundaryNormals2(std::vector<Cluster>& clusters) {
 		printf("Cluster %u neighbour count: %d\n", id, neighbours.size());
 		auto& this_verts = inner_static_mesh.GetVerticesEdit();
-		for (auto& vert : this_verts) {
-			int counter = 0;
+		for (int i = 0; i < this_verts.size(); i++) {
+			vec3 temp(.0f, .0f, .0f);
+			int  face_counter = 0;
+			bool found = false;
+
 			for (CLUSTER_ID neig : neighbours) {
 				Cluster& neighbour = clusters[neig];
 				auto& neig_verts = neighbour.GetVertices();
-				for (auto& nvert : neig_verts) {
-					if (vert.position == nvert.position) {
-						vert.normal = vert.normal + nvert.normal;
-						counter++;
+				for (int j = 0; j < neig_verts.size(); j++) {
+					if (this_verts[i].position == neig_verts[j].position) {
+						if (!found) {
+							int vertex_face_count = inner_static_mesh.GetVertexFaceCount(i);
+							temp += this_verts[i].normal * vertex_face_count;
+							face_counter += vertex_face_count;
+							found = true;
+						}
+
+						int neig_vertex_face_count = neighbour.inner_static_mesh.GetVertexFaceCount(j);
+						temp += neig_verts[j].normal * neig_vertex_face_count;
+						face_counter += neig_vertex_face_count;
 						break;
 					}
 				}
 			}
-			if (counter > 0) {
-				vert.normal = normalize(vert.normal / counter);
+			if (found) {
+				this_verts[i].normal = normalize(temp / face_counter);
 			}
 		}
 	}
@@ -543,15 +561,16 @@ public:
 	}
 
 	void Load(const std::string& file_path) {
-		/*if (!OpenMesh::IO::read_mesh(inner_mesh, file_path))
-		{
-			std::cerr << "Couldn't load cluster (tough luck)\n";
-		}
+		//if (!OpenMesh::IO::read_mesh(inner_mesh, file_path))
+		//{
+		//	std::cerr << "Couldn't load cluster (tough luck)\n";
+		//}
 
-		inner_mesh.request_vertex_normals();
+		//inner_mesh.request_face_normals();
+		//inner_mesh.request_vertex_normals();
 
-		inner_mesh.update_face_normals();
-		inner_mesh.update_vertex_normals();*/
+		//inner_mesh.update_face_normals();
+		//inner_mesh.update_vertex_normals();
 
 		inner_static_mesh = StaticMesh(file_path);
 
@@ -559,6 +578,40 @@ public:
 		//printf("\tArea: %f\n", area);
 		//printf("\tDensity: %f\n", triangle_density);
 
+		//printf("Cluster %u loaded successfully!\n", id);
+
+	}
+
+	void Finalize() {
+		for (OMesh::VertexIter v_i(inner_mesh.vertices_begin()); v_i != inner_mesh.vertices_end(); ++v_i) {
+			auto& position = inner_mesh.point(*v_i);
+			auto& normal = inner_mesh.normal(*v_i);
+			vec3 pos_v3 = vec3(position[0], position[1], position[2]);
+			vec3 norm_v3 = vec3(normal[0], normal[1], normal[2]);
+
+			Vertex temp = Vertex(pos_v3, norm_v3, color);
+
+			inner_static_mesh.AddVertex(temp);
+		}
+
+		for (OMesh::FaceIter f_i(inner_mesh.faces_begin()); f_i != inner_mesh.faces_end(); ++f_i) {
+			Face face;
+			int counter = 0;
+			for (OMesh::FaceVertexIter fv_i(inner_mesh.fv_begin(*f_i)); fv_i != inner_mesh.fv_end(*f_i); ++fv_i) {
+				if (counter == 0) {
+					face.a = fv_i->idx();
+				}
+				else if (counter == 1) {
+					face.b = fv_i->idx();
+				}
+				else if (counter == 2) {
+					face.c = fv_i->idx();
+					break;
+				}
+				counter++;
+			}
+			inner_static_mesh.AddFace(face);
+		}
 	}
 
 	void SetParentalDensity(float density) {

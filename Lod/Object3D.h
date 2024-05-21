@@ -24,6 +24,8 @@ private:
 	bool wireFrameEnabled = false;
 	bool trueColorEnabled = false;
 
+	bool MVPUpdateEnabled = true;
+
 	mat4 modelMatrix = IdentityMatrix();
 	std::string modelMatrixUniformName;
 
@@ -127,13 +129,24 @@ public:
 		vec4 pos = (vec4(0, 0, 0, 1) * MVP);
 		distance_from_camera = pos.w;
 		printf("Camera distance: %f\n", distance_from_camera);
-		shader_material.SetUniform("MVP", (project_mat * view_mat * modelMatrix));
-		shader_material.SetUniform("modelMatrix", modelMatrix);
-		shader_material.SetUniform("modelMatrixInverse", Invert(modelMatrix));
-		shader_material.SetUniform("viewMatrix", view_mat);
-		shader_material.SetUniform("projMatrix", project_mat);
+		if (MVPUpdateEnabled) {
+			shader_material.SetUniform("MVP", (project_mat * view_mat * modelMatrix));
+			shader_material.SetUniform("modelMatrix", modelMatrix);
+			shader_material.SetUniform("modelMatrixInverse", Invert(modelMatrix));
+			shader_material.SetUniform("viewMatrix", view_mat);
+			shader_material.SetUniform("projMatrix", project_mat);
+		}
 		//printf("%f\n", distance_from_camera);
 		////shader_material.SetUniform("MVP", (modelMatrix * view_mat * project_mat));
+	}
+
+	// Only for showcasing
+	void DisableMVPUpdate() {
+		MVPUpdateEnabled = false;
+	}
+
+	void EnableMVPUpdate() {
+		MVPUpdateEnabled = true;
 	}
 
 	void Draw() {

@@ -318,6 +318,8 @@ void Initialization() {
     scene->SetCamera(vec3(-3.190557, 6.917207, -9.062605), vec3(-0.379691, 4.304642, 0.749835), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
     scene->AddObject(triangle);
 
+    triangle->DisableMVPUpdate();
+
     std::vector<std::string> asd = triangle->Material().GetUniforms();
 
     for (std::string a : asd) {
@@ -371,7 +373,7 @@ int main(int argc, char* argv[])
 
             case SDL_MOUSEBUTTONDOWN:
                 switch (event.button.button) {
-                case SDL_BUTTON_MIDDLE:
+                case SDL_BUTTON_RIGHT:
                     mmb_pressed = true;
                     break;
                 }
@@ -379,7 +381,7 @@ int main(int argc, char* argv[])
 
             case SDL_MOUSEBUTTONUP:
                 switch (event.button.button) {
-                case SDL_BUTTON_MIDDLE:
+                case SDL_BUTTON_RIGHT:
                     mmb_pressed = false;
                     break;
                 }
@@ -409,6 +411,7 @@ int main(int argc, char* argv[])
         // Draw
         //glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        //glClearColor(0.f, 0.f, 0.f, 1.0f);
 
         if (mmb_pressed && length(mmb_movement)) {
             if (shift_pressed) {

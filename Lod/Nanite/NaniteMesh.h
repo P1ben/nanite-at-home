@@ -439,6 +439,10 @@ public:
 			clr.FixBoundaryNormals2(clusters);
 		}
 
+		//for (Cluster& clr : clusters) {
+		//	clr.Finalize();
+		//}
+
 		RecalculateFaceCount();
 		UpdateDensityForClusters();
 

@@ -175,6 +175,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShaderMaterial.h" />
     <ClInclude Include="StaticDecimator.h" />
+    <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="ThreadPool\Task.h" />
     <ClInclude Include="ThreadPool\ThreadPool.h" />
     <ClInclude Include="UniformField.h" />

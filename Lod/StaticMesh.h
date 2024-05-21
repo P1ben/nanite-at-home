@@ -58,6 +58,14 @@ public:
 		printf("Number of vertices loaded: %u | Faces: %u\n", vertices.size(), faces.size());
 	}
 
+	void AddVertex(Vertex& vert) {
+		this->vertices.push_back(vert);
+	}
+
+	void AddFace(Face& face) {
+		this->faces.push_back(face);
+	}
+
 	void SetVertices(std::vector<Vertex>& vertices) {
 		this->vertices = std::vector<Vertex>(vertices);
 	}
@@ -80,6 +88,18 @@ public:
 
 	int GetFaceCount() override {
 		return faces.size();
+	}
+
+	int GetVertexFaceCount(VERTEX_ID vertex) {
+		int counter = 0;
+		
+		for (Face& face : faces) {
+			if (face.ContainsId(vertex)) {
+				counter++;
+			}
+		}
+
+		return counter;
 	}
 
 	float GetSurfaceArea() {
