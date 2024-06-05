@@ -181,6 +181,33 @@ void Initialization() {
     //humanoid_mesh = new StaticMesh("ment\\output8.obj");
     // 
 
+    //////////// Simplify with vertex clustering ///////////
+    //humanoid_mesh = new StaticMesh("dragon.obj");
+    //lod_meshes.push_back(Octree::SimplifyMesh(humanoid_mesh, ALG_QEF, 0.15f));
+    //lod_meshes.push_back(humanoid_mesh);
+    ////////////////////////////////////////////////////////
+
+    //////////// Simplify with incremental decimation ///////////
+    //humanoid_mesh = new StaticMesh("dragon.obj");
+    //
+    //Decimator2 dm2 = Decimator2(humanoid_mesh);
+    //dm2.CollapseEdges();
+    ////dm2.SaveMesh("temp_decimator_mesh.obj");
+
+    ////lod_meshes.push_back(new StaticMesh("temp_decimator_mesh.obj"));
+    /////////////////////////////////////////////////////////////
+
+    // Load mesh
+    //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output1.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output2.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output3.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output4.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output5.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output6.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output7.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output8.obj"));
+
     //////////// Generate nanite mesh from static mesh ///////////
     //humanoid_mesh = new StaticMesh("dragon.obj");
     //Decimator2 dm2(humanoid_mesh);
@@ -317,8 +344,11 @@ void Initialization() {
     //scene->SetCamera(vec3(0, 0, -1), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
     scene->SetCamera(vec3(-3.190557, 6.917207, -9.062605), vec3(-0.379691, 4.304642, 0.749835), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
     scene->AddObject(triangle);
-
-    triangle->DisableMVPUpdate();
+    
+    // Fixes weird bug with shading
+    scene->Draw();
+    scene->ZoomCamera(0.0f);
+    //triangle->DisableMVPUpdate();
 
     std::vector<std::string> asd = triangle->Material().GetUniforms();
 
@@ -337,6 +367,9 @@ Mesh* current_mesh = nullptr;
 
 bool algo_changed = false;
 Algorithm current_algo = ALG_SIMPLE_AVG;
+
+int frames_elapsed = 0;
+bool animation_started = false;
 
 /* Our program's entry point */
 int main(int argc, char* argv[])
@@ -360,8 +393,12 @@ int main(int argc, char* argv[])
                 case SDLK_LSHIFT:
                     shift_pressed = true;
                     break;
-                }
                 break;
+                case SDLK_a:
+                    animation_started = !animation_started;
+                    break;
+                break;
+                }
 
             case SDL_KEYUP:
                 switch (event.key.keysym.sym) {
@@ -478,6 +515,14 @@ int main(int argc, char* argv[])
             }
         }
 
+        if (ImGui::Button("Lock Camera")) {
+            triangle->DisableMVPUpdate();
+        }
+
+        if (ImGui::Button("Unlock Camera")) {
+            triangle->EnableMVPUpdate();
+        }
+
         ImGui::End();
 
 
@@ -490,6 +535,12 @@ int main(int argc, char* argv[])
             triangle->SetMesh(lod_meshes[current_simplificaton_rate]);
             algo_changed = false;
         }
+
+        if (animation_started)
+            scene->ZoomCamera(-0.4f);
+        frames_elapsed = 0;
+
+        frames_elapsed++;
 
         scene->Draw();
 

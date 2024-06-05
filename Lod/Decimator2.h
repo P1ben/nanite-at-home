@@ -308,7 +308,7 @@ public:
 		}
 	}
 
-	void SaveMesh(std::string& path) {
+	void SaveMesh(const std::string& path) {
 		mesh.garbage_collection();
 		try
 		{

@@ -413,8 +413,8 @@ public:
 		printf("After vertice count: %d\n", head->GetContainedVertexCount());
 	}
 
-	Mesh* RestoreMesh(int dpth, Algorithm algorithm) {
-		Mesh* ret_mesh;
+	StaticMesh* RestoreMesh(int dpth, Algorithm algorithm) {
+		StaticMesh* ret_mesh;
 		faces_temp_buffer = std::vector<Face>(faces);
 		vertices_temp_buffer = std::vector<Vertex>(vertices);
 		//std::vector<VertexData> vdt;
@@ -471,7 +471,7 @@ public:
 
 	}
 
-	static Mesh* SimplifyMesh(Mesh* input, Algorithm algo, float epsilon) {
+	static StaticMesh* SimplifyMesh(Mesh* input, Algorithm algo, float epsilon) {
 		float mesh_radius = VecLib::GetBoundingBoxRadius(input->GetVertices()) + 0.01f;
 		int   depth = 0;
 		float temp = epsilon;

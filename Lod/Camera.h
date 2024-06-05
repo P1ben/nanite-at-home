@@ -136,7 +136,9 @@ public:
 
 	void AddObject(Object3D* object) {
 		objects.push_back(object);
-		camera->UpdateObs();
+		// Temp TODO: remove
+		camera->RecalculateViewMatrix();
+		//camera->UpdateObs();
 	}
 
 	void Draw() {
