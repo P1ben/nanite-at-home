@@ -37,7 +37,8 @@ vec3 shade_phong_blinn(vec3 normal, vec3 lightDir, vec3 viewDir,
 }
 
 void main() {
-    Light pointLight = { vec4(cameraPosition, 1.0), vec3(1.0, 1.0, 1.0) };
+    //Light pointLight = { vec4(cameraPosition, 1.0), vec3(1.0, 1.0, 1.0) };
+    Light pointLight = { vec4(-3.190557, 6.917207, -9.062605, 1.0), vec3(1.0, 1.0, 1.0) };
 
     vec3 color = useTrueColor ? vertexColor : drawColor;
     vec3 normal = normalize(worldNormal.xyz);
