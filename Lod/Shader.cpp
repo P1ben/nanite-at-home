@@ -109,6 +109,33 @@ void Shader::Compile() {
     // Delete shaders from gpu memory
     if (vertex_code)   glDeleteShader(vertex);
     if (fragment_code) glDeleteShader(fragment);
+
+    GLuint blockIndex = glGetUniformBlockIndex(Id, "Camera");
+
+    std::cout << "diskParameters is a uniform block occupying block index: " << blockIndex << '\n';
+
+    GLint blockSize;
+    glGetActiveUniformBlockiv(Id, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+    std::cout << "\ttaking up " << blockSize << " bytes\n";
+
+    GLubyte* blockBuffer = (GLubyte*)malloc(blockSize);
+
+    const GLchar* names[] = { "viewMatrix","projMatrix", "cameraPosition"};
+
+    GLuint indices[3];
+    glGetUniformIndices(Id, 3, names, indices);
+
+    for (int i = 0; i < 3; ++i) {
+        std::cout << "attribute \"" << names[i] << "\" has index: " << indices[i] << " in the block.\n";
+    }
+
+    GLint offset[3];
+    glGetActiveUniformsiv(Id, 3, indices, GL_UNIFORM_OFFSET, offset);
+
+    for (int i = 0; i < 3; ++i) {
+        std::cout << "attribute \"" << names[i] << "\" has offset: " << offset[i] << " in the block.\n";
+    }
 }
 
 void Shader::Activate() {

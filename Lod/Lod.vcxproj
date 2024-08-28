@@ -136,6 +136,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
@@ -148,6 +149,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClCompile Include="OBJParser\OBJParser.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ThreadPool\ThreadPool.cpp" />
+    <ClCompile Include="Uniform\CameraUniformBlock.cpp" />
+    <ClCompile Include="Uniform\UniformBuffer.cpp" />
     <ClCompile Include="VecLib\VecLib.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -179,6 +182,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="ThreadPool\Task.h" />
     <ClInclude Include="ThreadPool\ThreadPool.h" />
     <ClInclude Include="UniformField.h" />
+    <ClInclude Include="Uniform\CameraUniformBlock.h" />
+    <ClInclude Include="Uniform\UniformBuffer.h" />
     <ClInclude Include="VecLib\VecLib.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

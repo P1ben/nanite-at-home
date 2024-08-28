@@ -133,8 +133,6 @@ public:
 			shader_material.SetUniform("MVP", (project_mat * view_mat * modelMatrix));
 			shader_material.SetUniform("modelMatrix", modelMatrix);
 			shader_material.SetUniform("modelMatrixInverse", Invert(modelMatrix));
-			shader_material.SetUniform("viewMatrix", view_mat);
-			shader_material.SetUniform("projMatrix", project_mat);
 		}
 		//printf("%f\n", distance_from_camera);
 		////shader_material.SetUniform("MVP", (modelMatrix * view_mat * project_mat));
@@ -160,6 +158,8 @@ public:
 		if (current_mesh) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glEnable(GL_POLYGON_OFFSET_FILL);
+			shader_material.SetUniform("modelMatrix", modelMatrix);
+			shader_material.SetUniform("modelMatrixInverse", Invert(modelMatrix));
 			this->buffer.Draw();
 
 			if (wireFrameEnabled) {

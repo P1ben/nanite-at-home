@@ -16,7 +16,7 @@
 #include "OBJParser/OBJParser.h"
 #include "Shader.h"
 #include "UniformField.h"
-#include "Camera.h"
+#include "Scene.h"
 #include "Octree.h"
 #include "EdgeCollection.h"
 #include "GroupedMesh.h"
@@ -198,7 +198,7 @@ void Initialization() {
     /////////////////////////////////////////////////////////////
 
     // Load mesh
-    //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
+    lod_meshes.push_back(new StaticMesh("output/output0.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output1.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output2.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output3.obj"));
@@ -230,15 +230,15 @@ void Initialization() {
     /////////////////////////////////////////////////////////////
 
     //////// Render loaded mesh /////////
-    PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
-        nanite_mesh = new NaniteMesh("real_nanite_mesh");
-    })
-    
-    PRINT_TIME_TAKEN("Setting Step Boundaries:", {
-        nanite_mesh->SetChangeStepForClusters(10.2312423f);
-    })
+    //PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
+    //    nanite_mesh = new NaniteMesh("real_nanite_mesh");
+    //})
+    //
+    //PRINT_TIME_TAKEN("Setting Step Boundaries:", {
+    //    nanite_mesh->SetChangeStepForClusters(10.2312423f);
+    //})
 
-    lod_meshes.push_back(nanite_mesh);
+    //lod_meshes.push_back(nanite_mesh);
     /////////////////////////////////////
 
 

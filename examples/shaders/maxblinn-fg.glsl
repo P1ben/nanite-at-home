@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 in vec3 vertexColor; // specify a color output to the fragment shader
 
@@ -6,11 +6,14 @@ in vec4 modelPosition;
 in vec4 worldPosition;
 in vec4 worldNormal;
 
+layout (std140, binding = 1) uniform Camera {
+    mat4 viewMatrix;
+    mat4 projMatrix;
+    vec3 cameraPosition;
+};
 
 uniform vec3 drawColor;
 uniform bool useTrueColor;
-uniform vec3 cameraPosition;
-
 
 out vec4 fragmentColor;
 
