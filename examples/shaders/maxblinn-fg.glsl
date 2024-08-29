@@ -1,6 +1,6 @@
 #version 420 core
 
-in vec3 vertexColor; // specify a color output to the fragment shader
+in vec3 vertexColor;
 
 in vec4 modelPosition;
 in vec4 worldPosition;
@@ -12,8 +12,12 @@ layout (std140, binding = 1) uniform Camera {
     vec3 cameraPosition;
 };
 
-uniform vec3 drawColor;
-uniform bool useTrueColor;
+layout (std140, binding = 2) uniform Object {
+    mat4 modelMatrix;
+    mat4 modelMatrixInverse;
+    vec3 drawColor;
+    bool useTrueColor;
+};
 
 out vec4 fragmentColor;
 
@@ -41,7 +45,7 @@ vec3 shade_phong_blinn(vec3 normal, vec3 lightDir, vec3 viewDir,
 
 void main() {
     //Light pointLight = { vec4(cameraPosition, 1.0), vec3(1.0, 1.0, 1.0) };
-    Light pointLight = { vec4(-3.190557, 6.917207, -9.062605, 1.0), vec3(1.0, 1.0, 1.0) };
+    Light pointLight = Light(vec4(-3.190557, 6.917207, -9.062605, 1.0), vec3(1.0, 1.0, 1.0));
 
     vec3 color = useTrueColor ? vertexColor : drawColor;
     vec3 normal = normalize(worldNormal.xyz);

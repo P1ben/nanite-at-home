@@ -9,11 +9,14 @@ layout (std140, binding = 1) uniform Camera {
     vec3 cameraPosition;
 };
 
-uniform mat4 modelMatrix;
-uniform mat4 modelMatrixInverse;
+layout (std140, binding = 2) uniform Object {
+    mat4 modelMatrix;
+    mat4 modelMatrixInverse;
+    vec3 drawColor;
+    bool useTrueColor;
+};
 
-out vec3 vertexColor; // specify a color output to the fragment shader
-
+out vec3 vertexColor;
 out vec4 modelPosition;
 out vec4 worldPosition;
 out vec4 worldNormal;
