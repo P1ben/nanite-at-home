@@ -183,7 +183,6 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="ThreadPool\Task.h" />
     <ClInclude Include="ThreadPool\ThreadPool.h" />
-    <ClInclude Include="UniformField.h" />
     <ClInclude Include="Uniform\CameraUniformBlock.h" />
     <ClInclude Include="Uniform\Object3DUniformBlock.h" />
     <ClInclude Include="Uniform\UniformBuffer.h" />

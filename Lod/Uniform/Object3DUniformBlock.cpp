@@ -24,7 +24,7 @@ static constexpr uint32_t OBJECT3D_BINDING_POINT = 2;
 
 Object3DUniformBlock::Object3DUniformBlock() {
 	uint32_t mat4_size = sizeof(mat4);
-	uint32_t vec3_size = sizeof(vec4);
+	uint32_t vec3_size = sizeof(vec3);
 	uint32_t bool_size = 4;
 
 	uint32_t full_buffer_size = 2 * mat4_size + vec3_size + bool_size;

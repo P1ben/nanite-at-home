@@ -32,7 +32,6 @@ void UniformBuffer::SetValue(uint32_t offset, int value) {
 
 void UniformBuffer::SetValue(uint32_t offset, bool value) {
 	int value_4byte = value;
-	printf("Setting bool value: %s, int: %d\n", value ? "true" : "false", value_4byte);
 	_SetValue(offset, 4, &value_4byte);
 }
 

@@ -15,7 +15,6 @@
 #include "Object3D.h"
 #include "OBJParser/OBJParser.h"
 #include "Shader.h"
-#include "UniformField.h"
 #include "Scene.h"
 #include "Octree.h"
 #include "EdgeCollection.h"
@@ -337,7 +336,7 @@ void Initialization() {
     triangle->SetOriginalMesh(lod_meshes[0]);
 
     triangle->SetShader(shader);
-    triangle->Material().SetUniform("drawColor", vec3(1.0f, 0.0f, 0));
+    triangle->SetDrawColor(vec3(1.0f, 0.0f, 0));
     //triangle->Material().SetUniform("useTrueColor", false);
 
     scene = new Scene();
@@ -349,12 +348,6 @@ void Initialization() {
     scene->Draw();
     scene->ZoomCamera(0.0f);
     //triangle->DisableMVPUpdate();
-
-    std::vector<std::string> asd = triangle->Material().GetUniforms();
-
-    for (std::string a : asd) {
-        printf("%s\n", a.c_str());
-    }
 }
 
 int current_simplificaton_rate = 0;

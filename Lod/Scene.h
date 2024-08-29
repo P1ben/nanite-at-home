@@ -1,6 +1,5 @@
 #pragma once
 #include "framework.h"
-#include "UniformField.h"
 #include "Quaternion.h"
 #include "Camera.h"
 #include "Object3D.h"
