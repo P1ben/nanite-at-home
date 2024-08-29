@@ -34,7 +34,7 @@ public:
 	void Activate() {
 		if (shader) {
 			shader->Activate();
-			uniform_field.Apply();
+			//uniform_field.Apply();
 		}
 	}
 

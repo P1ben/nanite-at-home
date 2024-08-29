@@ -110,7 +110,7 @@ void Shader::Compile() {
     if (vertex_code)   glDeleteShader(vertex);
     if (fragment_code) glDeleteShader(fragment);
 
-    GLuint blockIndex = glGetUniformBlockIndex(Id, "Camera");
+    GLuint blockIndex = glGetUniformBlockIndex(Id, "Object");
 
     std::cout << "diskParameters is a uniform block occupying block index: " << blockIndex << '\n';
 
@@ -121,19 +121,19 @@ void Shader::Compile() {
 
     GLubyte* blockBuffer = (GLubyte*)malloc(blockSize);
 
-    const GLchar* names[] = { "viewMatrix","projMatrix", "cameraPosition"};
+    const GLchar* names[] = { "modelMatrix","modelMatrixInverse", "drawColor", "useTrueColor"};
 
-    GLuint indices[3];
-    glGetUniformIndices(Id, 3, names, indices);
+    GLuint indices[4];
+    glGetUniformIndices(Id, 4, names, indices);
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
         std::cout << "attribute \"" << names[i] << "\" has index: " << indices[i] << " in the block.\n";
     }
 
-    GLint offset[3];
-    glGetActiveUniformsiv(Id, 3, indices, GL_UNIFORM_OFFSET, offset);
+    GLint offset[4];
+    glGetActiveUniformsiv(Id, 4, indices, GL_UNIFORM_OFFSET, offset);
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
         std::cout << "attribute \"" << names[i] << "\" has offset: " << offset[i] << " in the block.\n";
     }
 }

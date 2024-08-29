@@ -492,7 +492,7 @@ int main(int argc, char* argv[])
 
         if (current_color != old_color) {
             old_color = current_color;
-            triangle->Material().SetUniform("drawColor", current_color);
+            triangle->SetDrawColor(current_color);
         }
 
         if (ImGui::Button("Toggle Wireframe")) {
@@ -516,11 +516,11 @@ int main(int argc, char* argv[])
         }
 
         if (ImGui::Button("Lock Camera")) {
-            triangle->DisableMVPUpdate();
+            //triangle->DisableMVPUpdate();
         }
 
         if (ImGui::Button("Unlock Camera")) {
-            triangle->EnableMVPUpdate();
+            //triangle->EnableMVPUpdate();
         }
 
         ImGui::End();

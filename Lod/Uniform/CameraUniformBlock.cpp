@@ -14,8 +14,8 @@ layout (std140, binding = 1) uniform Camera {
 
 enum : uint32_t {
     VIEW_MATRIX_OFFSET          = 0,
-    PROJ_MATRIX_OFFSET          = 1 * sizeof(mat4),
-    CAMERA_POSITION_OFFSET      = 2 * sizeof(mat4),
+    PROJ_MATRIX_OFFSET          = VIEW_MATRIX_OFFSET + sizeof(mat4),
+    CAMERA_POSITION_OFFSET      = PROJ_MATRIX_OFFSET + sizeof(mat4),
 };
 
 static constexpr uint32_t CAMERA_BINDING_POINT = 1;
