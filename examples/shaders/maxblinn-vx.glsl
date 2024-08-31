@@ -2,7 +2,7 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 color;
-layout (location = 3) in vec3 UV;
+layout (location = 3) in vec2 UV;
 
 layout (std140, binding = 1) uniform Camera {
     mat4 viewMatrix;
@@ -26,7 +26,7 @@ void main()
 {
     vec4 vertexPosition = vec4(aPos, 1.0);
     gl_Position = (transpose(projMatrix) * transpose(viewMatrix) * modelMatrix) * vertexPosition; // see how we directly give a vec3 to vec4's constructor
-    vertexColor = color; // set the output variable to a dark-red color
+    vertexColor = vec3(UV, 0.0); // set the output variable to a dark-red color
 
     modelPosition = vertexPosition;
     worldPosition = modelMatrix * vertexPosition;

@@ -197,8 +197,11 @@ void Initialization() {
     ////lod_meshes.push_back(new StaticMesh("temp_decimator_mesh.obj"));
     /////////////////////////////////////////////////////////////
 
+    // Load mesh with uv coords
+    lod_meshes.push_back(new StaticMesh("dragon_tex.obj"));
+
     // Load mesh
-    lod_meshes.push_back(new StaticMesh("output/output0.obj"));
+    //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output1.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output2.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output3.obj"));
