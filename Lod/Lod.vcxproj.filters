@@ -101,9 +101,6 @@
     <ClInclude Include="ShaderMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UniformField.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VecLib\VecLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -168,6 +165,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Uniform\Object3DUniformBlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Framebuffer\Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Framebuffer\Framebuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -23,6 +23,7 @@
 #include "OpenMeshTest.h"
 #include "Decimator2.h"
 #include "GraphPartitioner.h"
+#include "Framebuffer/Framebuffer.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -347,6 +348,13 @@ void Initialization() {
     // Fixes weird bug with shading
     scene->Draw();
     scene->ZoomCamera(0.0f);
+
+    Framebuffer fb = Framebuffer(1024, 1024);
+    fb.Use();
+    scene->Draw();
+    fb.Save("result.jpg");
+    Framebuffer::UseDefault();
+
     //triangle->DisableMVPUpdate();
 }
 
