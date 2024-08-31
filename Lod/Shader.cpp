@@ -109,6 +109,33 @@ void Shader::Compile() {
     // Delete shaders from gpu memory
     if (vertex_code)   glDeleteShader(vertex);
     if (fragment_code) glDeleteShader(fragment);
+
+    GLuint blockIndex = glGetUniformBlockIndex(Id, "Object");
+
+    std::cout << "diskParameters is a uniform block occupying block index: " << blockIndex << '\n';
+
+    GLint blockSize;
+    glGetActiveUniformBlockiv(Id, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
+
+    std::cout << "\ttaking up " << blockSize << " bytes\n";
+
+    GLubyte* blockBuffer = (GLubyte*)malloc(blockSize);
+
+    const GLchar* names[] = { "modelMatrix","modelMatrixInverse", "drawColor", "useTrueColor"};
+
+    GLuint indices[4];
+    glGetUniformIndices(Id, 4, names, indices);
+
+    for (int i = 0; i < 4; ++i) {
+        std::cout << "attribute \"" << names[i] << "\" has index: " << indices[i] << " in the block.\n";
+    }
+
+    GLint offset[4];
+    glGetActiveUniformsiv(Id, 4, indices, GL_UNIFORM_OFFSET, offset);
+
+    for (int i = 0; i < 4; ++i) {
+        std::cout << "attribute \"" << names[i] << "\" has offset: " << offset[i] << " in the block.\n";
+    }
 }
 
 void Shader::Activate() {

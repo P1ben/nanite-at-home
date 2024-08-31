@@ -1,21 +1,24 @@
 #pragma once
+#include "framework.h"
+#include "Quaternion.h"
 #include "Camera.h"
-#include "Object3d.h"
-class Camera;
+#include "Object3D.h"
 
 class Scene {
 private:
 	Camera* camera = nullptr;
-	std::vector<Object3D> objects;
+	std::vector<Object3D*> objects;
 
 public:
-	Scene() {}
+	Scene();
+	~Scene();
 
-	void SetCamera(vec3& pos, vec3& target, vec3& up_dir, float fov, float asp, float near_plane, float far_plane) {
-		if (camera) {
-			delete camera;
-		}
+	void SetCamera(const vec3& pos, const vec3& target, const vec3& up_dir, float fov, float asp, float near_plane, float far_plane);
+	void AddObject(Object3D* object);
 
-		camera = new Camera(pos, target, up_dir, fov, asp, near_plane, far_plane);
-	}
+	void Draw();
+
+	void ZoomCamera(float amount);
+	void OrbitCamera(float rad, const vec2& axis);
+	void MoveCamera(float amount, const vec2& dir);
 };

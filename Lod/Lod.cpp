@@ -15,8 +15,7 @@
 #include "Object3D.h"
 #include "OBJParser/OBJParser.h"
 #include "Shader.h"
-#include "UniformField.h"
-#include "Camera.h"
+#include "Scene.h"
 #include "Octree.h"
 #include "EdgeCollection.h"
 #include "GroupedMesh.h"
@@ -198,7 +197,7 @@ void Initialization() {
     /////////////////////////////////////////////////////////////
 
     // Load mesh
-    //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
+    lod_meshes.push_back(new StaticMesh("output/output0.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output1.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output2.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output3.obj"));
@@ -230,15 +229,15 @@ void Initialization() {
     /////////////////////////////////////////////////////////////
 
     //////// Render loaded mesh /////////
-    PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
-        nanite_mesh = new NaniteMesh("real_nanite_mesh");
-    })
-    
-    PRINT_TIME_TAKEN("Setting Step Boundaries:", {
-        nanite_mesh->SetChangeStepForClusters(10.2312423f);
-    })
+    //PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
+    //    nanite_mesh = new NaniteMesh("real_nanite_mesh");
+    //})
+    //
+    //PRINT_TIME_TAKEN("Setting Step Boundaries:", {
+    //    nanite_mesh->SetChangeStepForClusters(10.2312423f);
+    //})
 
-    lod_meshes.push_back(nanite_mesh);
+    //lod_meshes.push_back(nanite_mesh);
     /////////////////////////////////////
 
 
@@ -337,7 +336,7 @@ void Initialization() {
     triangle->SetOriginalMesh(lod_meshes[0]);
 
     triangle->SetShader(shader);
-    triangle->Material().SetUniform("drawColor", vec3(1.0f, 0.0f, 0));
+    triangle->SetDrawColor(vec3(1.0f, 0.0f, 0));
     //triangle->Material().SetUniform("useTrueColor", false);
 
     scene = new Scene();
@@ -349,12 +348,6 @@ void Initialization() {
     scene->Draw();
     scene->ZoomCamera(0.0f);
     //triangle->DisableMVPUpdate();
-
-    std::vector<std::string> asd = triangle->Material().GetUniforms();
-
-    for (std::string a : asd) {
-        printf("%s\n", a.c_str());
-    }
 }
 
 int current_simplificaton_rate = 0;
@@ -492,7 +485,7 @@ int main(int argc, char* argv[])
 
         if (current_color != old_color) {
             old_color = current_color;
-            triangle->Material().SetUniform("drawColor", current_color);
+            triangle->SetDrawColor(current_color);
         }
 
         if (ImGui::Button("Toggle Wireframe")) {
@@ -516,11 +509,11 @@ int main(int argc, char* argv[])
         }
 
         if (ImGui::Button("Lock Camera")) {
-            triangle->DisableMVPUpdate();
+            //triangle->DisableMVPUpdate();
         }
 
         if (ImGui::Button("Unlock Camera")) {
-            triangle->EnableMVPUpdate();
+            //triangle->EnableMVPUpdate();
         }
 
         ImGui::End();
