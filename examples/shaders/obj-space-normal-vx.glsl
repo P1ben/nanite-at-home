@@ -25,11 +25,12 @@ out vec4 worldNormal;
 
 void main()
 {
+    vec2 UV_screen = UV * 2.0 - 1.0;
     vec4 vertexPosition = vec4(aPos, 1.0);
-    gl_Position = (transpose(projMatrix) * transpose(viewMatrix) * modelMatrix) * vertexPosition;
-    vertexColor = vec3(UV, 0.0);
+    gl_Position = vec4(vec3(UV_screen, 0.0), 1.0);
+    vertexColor = vec3(UV_screen, 0.0);
 
     modelPosition = vertexPosition;
     worldPosition = modelMatrix * vertexPosition;
-    worldNormal = vec4(normal, 0.0) * modelMatrixInverse;
+    worldNormal = vec4(normal, 1.0);
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Texture.h"
+#include "../Shader.h"
 
 class Framebuffer {
 private:
@@ -62,6 +63,21 @@ public:
 		glViewport(0, 0, size_x, size_y);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	static void CreateObjNormalMap(Mesh* mesh, const char* file_path) {
+		Shader shader = Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
+		Object3D temp_obj = Object3D();
+		temp_obj.SetOriginalMesh(mesh);
+		temp_obj.SetShader(&shader);
+
+		Framebuffer fb = Framebuffer(1024, 1024);
+		fb.Use();
+
+		temp_obj.Draw();
+
+		fb.Save(file_path);
+		Framebuffer::UseDefault();
 	}
 
 	void Save(const char* file_name) {

@@ -172,7 +172,12 @@ void Initialization() {
     faces.push_back({ 1, 2, 3 });
 
     //shader = new Shader("shaders/test-vx.glsl", "shaders/test-fg.glsl");
+    
+    // Max Blinn shader (plz use this)
     shader = new Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
+    
+    // Obj space normal shader test
+    //shader = new Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
 
 
     //humanoid_mesh = OBJParser::Parse("humanoid.obj");
@@ -198,7 +203,8 @@ void Initialization() {
     /////////////////////////////////////////////////////////////
 
     // Load mesh with uv coords
-    lod_meshes.push_back(new StaticMesh("dragon_tex.obj"));
+    //lod_meshes.push_back(new StaticMesh("dragon_tex.obj"));
+    lod_meshes.push_back(new StaticMesh("capsule.obj"));
 
     // Load mesh
     //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
@@ -352,11 +358,13 @@ void Initialization() {
     scene->Draw();
     scene->ZoomCamera(0.0f);
 
-    Framebuffer fb = Framebuffer(1024, 1024);
-    fb.Use();
-    scene->Draw();
-    fb.Save("result.jpg");
-    Framebuffer::UseDefault();
+    Framebuffer::CreateObjNormalMap(lod_meshes[0], "result.jpg");
+
+    //Framebuffer fb = Framebuffer(1024, 1024);
+    //fb.Use();
+    //scene->Draw();
+    //fb.Save("result.jpg");
+    //Framebuffer::UseDefault();
 
     //triangle->DisableMVPUpdate();
 }
