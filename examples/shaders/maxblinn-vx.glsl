@@ -16,7 +16,13 @@ layout (std140, binding = 2) uniform Object {
     mat4 modelMatrixInverse;
     vec3 drawColor;
     bool useTrueColor;
+
+    bool useColorTexture;
+    bool useObjectSpaceNormalTexture;
 };
+
+layout (binding = 0) uniform sampler2D colorTexture;
+layout (binding = 1) uniform sampler2D objectSpaceNormalTexture;
 
 out vec3 vertexColor;
 out vec4 modelPosition;
@@ -31,5 +37,12 @@ void main()
 
     modelPosition = vertexPosition;
     worldPosition = modelMatrix * vertexPosition;
-    worldNormal = vec4(normal, 0.0) * modelMatrixInverse;
+
+    if (useObjectSpaceNormalTexture) {
+        // Convert from [0.0, 1.0] to [-1.0, 1.0] range
+        worldNormal = ((texture(objectSpaceNormalTexture, UV) - 0.5) * 2.0);
+    }
+    else {
+        worldNormal = vec4(normal, 0.0) * modelMatrixInverse;
+    }
 }

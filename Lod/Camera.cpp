@@ -97,7 +97,6 @@ void Camera::Move(float amount, const vec2& direction) {
 	vec3 dir_vec = CalculateMovementVector(direction);
 	this->targetPoint = this->targetPoint + amount * dir_vec;
 	SetWorldPosition(this->worldPosition + amount * dir_vec);
-	printf("Move.");
 	//printf("Camera pos: %f, %f, %f\n", worldPosition.x, worldPosition.y, worldPosition.z);
 	//printf("Lookat pos: %f, %f, %f\n", targetPoint.x, targetPoint.y, targetPoint.z);
 	RecalculateViewMatrix();

@@ -3,7 +3,7 @@
 #include <glew.h>
 #include <iostream>
 
-#include "Texture.h"
+#include "../Texture/Texture.h"
 #include "../Shader.h"
 
 class Framebuffer {
@@ -67,6 +67,7 @@ public:
 
 	static void CreateObjNormalMap(Mesh* mesh, const char* file_path) {
 		Shader shader = Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
+		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
 		Object3D temp_obj = Object3D();
 		temp_obj.SetOriginalMesh(mesh);
 		temp_obj.SetShader(&shader);
@@ -76,12 +77,12 @@ public:
 
 		temp_obj.Draw();
 
-		fb.Save(file_path);
+		fb.Save(file_path, true);
 		Framebuffer::UseDefault();
 	}
 
-	void Save(const char* file_name) {
-		color_tex->SaveAsJPG(file_name);
+	void Save(const char* file_name, bool flipped_vertically = false) {
+		color_tex->SaveAsJPG(file_name, flipped_vertically);
 	}
 
 	static void UseDefault() {

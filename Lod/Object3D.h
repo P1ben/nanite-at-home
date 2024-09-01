@@ -5,6 +5,8 @@
 #include "framework.h"
 #include "ThreadPool/Task.h"
 #include "Uniform/Object3DUniformBlock.h"
+#include "Texture/ColorMap.h"
+#include "Texture/ObjectSpaceNormalMap.h"
 //#include "Octree.h"
 
 class Object3D {
@@ -15,6 +17,12 @@ private:
 	mat4 modelMatrix = IdentityMatrix();
 	vec3 drawColor = vec3(1.0, 1.0, 1.0);
 	bool useTrueColor = false;
+
+	bool      useColorTexture = false;
+	ColorMap* colorTexture;
+
+	bool                  useObjectSpaceNormalTexture = false;
+	ObjectSpaceNormalMap* objectSpaceNormalTexture;
 
 	// Mesh
 	Mesh* original_mesh = nullptr;
@@ -117,6 +125,38 @@ public:
 		uniform_block->SetUseTrueColor(useTrueColor);
 	}
 
+	void AttachColorMap(ColorMap* colorMap) {
+		if (!colorMap) {
+			return;
+		}
+
+		this->colorTexture = colorMap;
+		useColorTexture = true;
+		uniform_block->SetUseColorTexture(true);
+	}
+
+	void DetachColorMap() {
+		this->colorTexture = nullptr;
+		useColorTexture = false;
+		uniform_block->SetUseColorTexture(false);
+	}
+
+	void AttachObjectSpaceNormalMap(ObjectSpaceNormalMap* objectSpaceNormalMap) {
+		if (!objectSpaceNormalMap) {
+			return;
+		}
+
+		this->objectSpaceNormalTexture = objectSpaceNormalMap;
+		useObjectSpaceNormalTexture = true;
+		uniform_block->SetUseObjectSpaceNormalTexture(true);
+	}
+
+	void DetachObjectSpaceNormalMap() {
+		this->objectSpaceNormalTexture = nullptr;
+		useObjectSpaceNormalTexture = false;
+		uniform_block->SetUseObjectSpaceNormalTexture(false);
+	}
+
 	void SetShader(Shader* shader) {
 		this->shader_material.SetShader(shader);
 	}
@@ -136,6 +176,14 @@ public:
 
 		uniform_block->Bind();
 		shader_material.Activate();
+
+		if (useColorTexture) {
+			colorTexture->Bind();
+		}
+
+		if (useObjectSpaceNormalTexture) {
+			objectSpaceNormalTexture->Bind();
+		}
 
 		if (current_mesh) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

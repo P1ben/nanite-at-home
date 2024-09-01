@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\imgui\include;$(SolutionDir)\libraries\Eigen\include;$(SolutionDir)\libraries\GLEW\include;$(SolutionDir)\libraries\SDL2\include;$(SolutionDir)\libraries\libigl\include;$(SolutionDir)\libraries\OpenMesh\include;$(SolutionDir)\libraries\METIS\include;$(SolutionDir)\libraries\3pp\image_write\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\imgui\include;$(SolutionDir)\libraries\Eigen\include;$(SolutionDir)\libraries\GLEW\include;$(SolutionDir)\libraries\SDL2\include;$(SolutionDir)\libraries\libigl\include;$(SolutionDir)\libraries\OpenMesh\include;$(SolutionDir)\libraries\METIS\include;$(SolutionDir)\libraries\3pp\stb_image\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,6 +136,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="3pp\stb_image.cpp" />
+    <ClCompile Include="3pp\stb_image_write.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -163,7 +165,9 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="Face.h" />
     <ClInclude Include="FaceGroup.h" />
     <ClInclude Include="Framebuffer\Framebuffer.h" />
-    <ClInclude Include="Framebuffer\Texture.h" />
+    <ClInclude Include="Texture\ColorMap.h" />
+    <ClInclude Include="Texture\ObjectSpaceNormalMap.h" />
+    <ClInclude Include="Texture\Texture.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GPUBuffer.h" />
     <ClInclude Include="GraphPartitioner.h" />

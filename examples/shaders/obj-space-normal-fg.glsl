@@ -17,6 +17,9 @@ layout (std140, binding = 2) uniform Object {
     mat4 modelMatrixInverse;
     vec3 drawColor;
     bool useTrueColor;
+
+    bool useColorTexture;
+    bool useObjectSpaceNormalTexture;
 };
 
 out vec4 fragmentColor;

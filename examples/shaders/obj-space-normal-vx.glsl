@@ -16,6 +16,9 @@ layout (std140, binding = 2) uniform Object {
     mat4 modelMatrixInverse;
     vec3 drawColor;
     bool useTrueColor;
+
+    bool useColorTexture;
+    bool useObjectSpaceNormalTexture;
 };
 
 out vec3 vertexColor;
@@ -25,12 +28,14 @@ out vec4 worldNormal;
 
 void main()
 {
-    vec2 UV_screen = UV * 2.0 - 1.0;
+    vec2 UV_screen = (UV * 2.0 - 1.0);
+    UV_screen *= vec2(1.0, 1.0);
     vec4 vertexPosition = vec4(aPos, 1.0);
     gl_Position = vec4(vec3(UV_screen, 0.0), 1.0);
     vertexColor = vec3(UV_screen, 0.0);
 
     modelPosition = vertexPosition;
     worldPosition = modelMatrix * vertexPosition;
-    worldNormal = vec4(normal, 1.0);
+    // Convert from [-1.0, 1.0] to [0.0, 1.0] range
+    worldNormal = vec4((normal / 2.0) + 0.5, 1.0);
 }

@@ -24,6 +24,7 @@
 #include "Decimator2.h"
 #include "GraphPartitioner.h"
 #include "Framebuffer/Framebuffer.h"
+#include "Texture/ObjectSpaceNormalMap.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -358,7 +359,13 @@ void Initialization() {
     scene->Draw();
     scene->ZoomCamera(0.0f);
 
+
+    // Normal map extraction test
     Framebuffer::CreateObjNormalMap(lod_meshes[0], "result.jpg");
+
+    ObjectSpaceNormalMap* capsule_normal_map = new ObjectSpaceNormalMap("result.jpg", true);
+    triangle->AttachObjectSpaceNormalMap(capsule_normal_map);
+    //////////////////////////////////////
 
     //Framebuffer fb = Framebuffer(1024, 1024);
     //fb.Use();
@@ -405,12 +412,11 @@ int main(int argc, char* argv[])
                 case SDLK_LSHIFT:
                     shift_pressed = true;
                     break;
-                break;
                 case SDLK_a:
                     animation_started = !animation_started;
                     break;
-                break;
                 }
+                break;
 
             case SDL_KEYUP:
                 switch (event.key.keysym.sym) {
