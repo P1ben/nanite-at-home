@@ -7,9 +7,16 @@
 uint32_t Shader::LAST_PROGRAM_LOADED = 0;
 
 Shader::Shader(const char* vertex_path, const char* fragment_path) {
+    vertexPath   = vertex_path;
+    fragmentPath = fragment_path;
     ReadVertexShader(vertex_path);
     ReadFragmentShader(fragment_path);
     Compile();
+}
+
+Shader::~Shader()
+{
+	glDeleteProgram(Id);
 }
 
 void Shader::ReadVertexShader(const char* vertex_path) {
@@ -105,6 +112,9 @@ void Shader::Compile() {
         glGetProgramInfoLog(Id, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
+    else {
+        std::cout << "SUCCESS::SHADER::PROGRAM::COMPILED_SUCCESSFULLY" << std::endl;
+    }
 
     // Delete shaders from gpu memory
     if (vertex_code)   glDeleteShader(vertex);
@@ -145,26 +155,17 @@ void Shader::Compile() {
     }
 }
 
+void Shader::Reload()
+{
+    glDeleteProgram(Id);
+	ReadVertexShader(vertexPath.c_str());
+	ReadFragmentShader(fragmentPath.c_str());
+	Compile();
+}
+
 void Shader::Activate() {
     if (Id != LAST_PROGRAM_LOADED) {
         glUseProgram(Id);
         LAST_PROGRAM_LOADED = Id;
     }
-}
-
-// Uniform Setters
-void Shader::SetBool(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_bool);
-}
-void Shader::SetInt(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_int);
-}
-void Shader::SetFloat(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_float);
-}
-void Shader::SetVec3(Uniform& uniform) {
-    glUniform3fv(glGetUniformLocation(Id, uniform.name.c_str()), 1, &uniform.val_vec3.x);
-}
-void Shader::SetMat4(Uniform& uniform) {
-    glUniformMatrix4fv(glGetUniformLocation(Id, uniform.name.c_str()), 1, GL_TRUE, uniform.val_mat4);
 }

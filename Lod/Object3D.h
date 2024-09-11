@@ -7,6 +7,9 @@
 #include "Uniform/Object3DUniformBlock.h"
 #include "Texture/ColorMap.h"
 #include "Texture/ObjectSpaceNormalMap.h"
+#include "Nanite/NaniteMesh.h"
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <experimental/filesystem>
 //#include "Octree.h"
 
 class Object3D {
@@ -14,15 +17,16 @@ private:
 	Object3DUniformBlock* uniform_block;
 
 	// Uniforms
+	vec3 worldPosition = vec3(0.0, 0.0, 0.0);
 	mat4 modelMatrix = IdentityMatrix();
 	vec3 drawColor = vec3(1.0, 1.0, 1.0);
 	bool useTrueColor = false;
 
 	bool      useColorTexture = false;
-	ColorMap* colorTexture;
+	ColorMap* colorTexture = nullptr;
 
 	bool                  useObjectSpaceNormalTexture = false;
-	ObjectSpaceNormalMap* objectSpaceNormalTexture;
+	ObjectSpaceNormalMap* objectSpaceNormalTexture = nullptr;
 
 	// Mesh
 	Mesh* original_mesh = nullptr;
@@ -52,6 +56,48 @@ public:
 
 	~Object3D() {
 		delete uniform_block;
+	}
+
+	static Object3D* LoadNaniteObject(const std::string& folder_path, bool texture_flipped = false) {
+		Object3D* object = new Object3D();
+		bool load_texture = false;
+		std::string texture_path;
+
+		bool load_normals = false;
+		std::string normals_path;
+
+		for (const auto& entry : std::experimental::filesystem::directory_iterator(folder_path)) {
+			std::string file = entry.path().filename().string();
+			if (file.find("texture.") != std::string::npos) {
+				load_texture = true;
+				texture_path = entry.path().string();
+			}
+			else if (file.find("normals.") != std::string::npos) {
+				load_normals = true;
+				normals_path = entry.path().string();
+			}
+		}
+
+		if (load_texture) {
+			object->AttachColorMap(new ColorMap(texture_path.c_str(), texture_flipped));
+		}
+
+		if (load_normals) {
+			object->AttachObjectSpaceNormalMap(new ObjectSpaceNormalMap(normals_path.c_str(), texture_flipped));
+		}
+
+		NaniteMesh* nanite_mesh = nullptr;
+
+		PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
+			nanite_mesh = new NaniteMesh(folder_path);
+		})
+
+		PRINT_TIME_TAKEN("Setting Step Boundaries:", {
+			nanite_mesh->SetChangeStepForClusters(10.2312423f);
+		})
+
+		object->SetOriginalMesh(nanite_mesh);
+		return object;
 	}
 
 	void SetMesh(Mesh* mesh) {
@@ -120,6 +166,15 @@ public:
 		uniform_block->SetDrawColor(color);
 	}
 
+	void SetModelMatrix(const mat4& modelMatrix) {
+		this->modelMatrix = modelMatrix;
+		uniform_block->SetModelMatrix(modelMatrix);
+	}
+
+	vec3& GetDrawColor() {
+		return drawColor;
+	}
+
 	void ToggleTrueColor() {
 		useTrueColor = !useTrueColor;
 		uniform_block->SetUseTrueColor(useTrueColor);
@@ -162,8 +217,10 @@ public:
 	}
 
 	void UpdateMesh(const vec3& camera_pos) {
-		if (current_mesh) {
-			current_mesh->Update(distance_from_camera);
+		float new_distance = length(camera_pos - worldPosition);
+		if (current_mesh && new_distance != distance_from_camera) {
+			current_mesh->Update(length(camera_pos - worldPosition));
+			distance_from_camera = new_distance;
 		}
 	}
 

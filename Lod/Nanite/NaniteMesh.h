@@ -304,7 +304,7 @@ public:
 			if (str_has_suffix(path, ".conf")) {
 				config_file = path;
 			}
-			else {
+			else if (str_has_suffix(path, ".obj")) {
 				cluster_files.push_back(path);
 			}
 			/*clusters.push_back(Cluster());
@@ -430,13 +430,13 @@ public:
 			lod_tree.AddCluster(*it);
 		}
 
-		printf("\tLodTree size: %u, Clusters list size: %u\n", lod_tree.CountNodes(), clusters.size());
+		//printf("\tLodTree size: %u, Clusters list size: %u\n", lod_tree.CountNodes(), clusters.size());
 
 		for (Cluster& clr : clusters) {
 			if (clr.GetLeaf()) {
 				active_clusters.push_back(clr.GetId());
 			}
-			clr.FixBoundaryNormals2(clusters);
+			//clr.FixBoundaryNormals2(clusters);
 		}
 
 		//for (Cluster& clr : clusters) {
@@ -467,6 +467,19 @@ public:
 
 		UpdateCurrentMesh();
 		this->SetUpdated(true);
+	}
+
+	void Reset() {
+		active_clusters.clear();
+		for (auto& cluster : clusters) {
+			if (cluster.GetLeaf()) {
+				active_clusters.push_back(cluster.GetId());
+			}
+		}
+
+		UpdateCurrentMesh();
+		RecalculateFaceCount();
+		SetUpdated(true);
 	}
 
 	void DecreaseQuality() {

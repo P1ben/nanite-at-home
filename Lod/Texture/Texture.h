@@ -66,7 +66,7 @@ public:
 	}
 
 	void SaveAsJPG(const char* file_name, bool flipped_vertically = false) {
-		uint8_t* data = new uint8_t[size_x * size_y * 4 * sizeof(uint32_t)];
+		uint8_t* data = new uint8_t[size_x * size_y * 4 * sizeof(uint8_t)];
 
 		glBindTexture(GL_TEXTURE_2D, tx_id);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);

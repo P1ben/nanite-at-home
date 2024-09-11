@@ -8,6 +8,8 @@
 #include <queue>
 #include "GraphPartitioner.h"
 #include "Nanite/NaniteMesh.h"
+#include "StaticDecimator.h"
+#include "Framebuffer/Framebuffer.h"
 
 class Decimator2 {
 	OMesh mesh;
@@ -101,11 +103,60 @@ class Decimator2 {
 		return mesh.data(_lhs).error() < mesh.data(_rhs).error();
 	}
 
+	OMesh::VertexHandle CopyVertexNoDupl(const Vertex& vertex) {
+		OMesh::Point      new_vert = OMesh::Point(vertex.position.x, vertex.position.y, vertex.position.z);
+		OMesh::TexCoord2D new_tex = OMesh::TexCoord2D(vertex.uv.x, vertex.uv.y);
+		for (OMesh::VertexIter v_it = mesh.vertices_begin(); v_it != mesh.vertices_end(); ++v_it) {
+			if (mesh.point(*v_it) == new_vert && mesh.texcoord2D(*v_it) == new_tex)
+				return *v_it;
+		}
+
+		OMesh::Normal new_normal = OMesh::Normal(vertex.normal.x, vertex.normal.y, vertex.normal.z);
+
+		OMesh::VertexHandle vh_n = mesh.add_vertex(new_vert);
+		mesh.set_normal(vh_n, new_normal);
+		mesh.set_texcoord2D(vh_n, new_tex);
+
+		return vh_n;
+	}
+
 public:
 	// TODO: Generates mesh, not good for performance
 	Decimator2() {}
 
+	Decimator2(const char* input_path) {
+		OpenMesh::IO::Options ropt;
+		ropt += OpenMesh::IO::Options::VertexNormal;
+		ropt += OpenMesh::IO::Options::VertexTexCoord;
+
+		mesh.request_vertex_normals();
+		mesh.request_face_normals();
+		mesh.request_vertex_texcoords2D();
+
+		if (!OpenMesh::IO::read_mesh(mesh, input_path, ropt)) {
+			std::cerr << "Cannot read mesh from file 'input.obj'" << std::endl;
+		}
+
+		mesh.update_face_normals();
+		mesh.update_vertex_normals();
+
+		int edge_count = 0;
+		for (auto edge : mesh.edges()) {
+			float error = CalculateErrorForEdge(edge);
+
+			mesh.data(edge).set_error(error);
+			//edge_count++;
+			//error_avg += error;
+		}
+		//error_avg /= edge_count;
+	
+	}
+
 	Decimator2(Mesh* _mesh) {
+		mesh.request_vertex_normals();
+		mesh.request_face_normals();
+		mesh.request_vertex_texcoords2D();
+
 		const auto& vertices = _mesh->GetVertices();
 		const auto& faces = _mesh->GetFaces();
 
@@ -115,6 +166,7 @@ public:
 		for (const Vertex& vert : vertices) {
 			OMesh::VertexHandle vh = mesh.add_vertex(OMesh::Point(vert.position.x, vert.position.y, vert.position.z));
 			mesh.set_normal(vh, MeshTraits::Normal(vert.normal.x, vert.normal.y, vert.normal.z));
+			mesh.set_texcoord2D(vh, MeshTraits::TexCoord2D(vert.uv.x, vert.uv.y));
 			vhandles.push_back(vh);
 		}
 
@@ -122,6 +174,18 @@ public:
 			OMesh::FaceHandle fh = mesh.add_face(vhandles[face.a], vhandles[face.b], vhandles[face.c]);
 			mesh.set_normal(fh, MeshTraits::Normal(face.normal.x, face.normal.y, face.normal.z));
 		}
+
+		//for (const Face& face : faces) {
+		//	OMesh::VertexHandle vh0 = CopyVertexNoDupl(vertices[face.a]);
+		//	OMesh::VertexHandle vh1 = CopyVertexNoDupl(vertices[face.b]);
+		//	OMesh::VertexHandle vh2 = CopyVertexNoDupl(vertices[face.c]);
+
+		//	OMesh::FaceHandle fh = mesh.add_face(vh0, vh1, vh2);
+		//	mesh.set_normal(fh, MeshTraits::Normal(face.normal.x, face.normal.y, face.normal.z));
+		//}
+
+		mesh.update_face_normals();
+		mesh.update_vertex_normals();
 
 		int edge_count = 0;
 		for (auto edge : mesh.edges()) {
@@ -138,8 +202,77 @@ public:
 		(void)GraphPartitioner::PartitionMesh(mesh, 128);
 	}
 
+	static void CreateNaniteMesh(std::string input_mesh_path, std::string output_mesh_path) {
+		//humanoid_mesh = new StaticMesh(input_mesh_path);
+		Decimator2 dm2(ObjReader::ReadObj(input_mesh_path.c_str()));
+
+		StaticMesh* temp_mesh = dm2.ConvertToStaticMesh();
+		Framebuffer::CreateObjNormalMap(temp_mesh, (output_mesh_path + "\\normals.jpg").c_str());
+		//lod_meshes.push_back(temp_mesh);
+		delete temp_mesh;
+
+		NaniteMesh* nanite_mesh;
+		PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
+			nanite_mesh = dm2.GetNaniteMesh();
+		})
+
+		PRINT_TIME_TAKEN("Generating Nanite Mesh:", {
+			nanite_mesh->Generate();
+		})
+
+		nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
+
+		PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
+			nanite_mesh->Save(output_mesh_path);
+		})
+
+		delete nanite_mesh;
+	}
+
 	NaniteMesh* GetNaniteMesh() {
 		return new NaniteMesh(mesh);
+	}
+
+	StaticMesh* ConvertToStaticMesh() {
+		std::vector<Vertex> vertices;
+		std::vector<Face>   faces;
+
+		for (OMesh::VertexIter v_i(mesh.vertices_begin()); v_i != mesh.vertices_end(); ++v_i) {
+			auto& position = mesh.point(*v_i);
+			auto& normal = mesh.normal(*v_i);
+			auto& uv = mesh.texcoord2D(*v_i);
+
+			vec3 pos_v3 = vec3(position[0], position[1], position[2]);
+			vec3 norm_v3 = vec3(normal[0], normal[1], normal[2]);
+			vec2 uv_v2 = vec2(uv[0], uv[1]);
+
+			Vertex temp = Vertex(pos_v3, norm_v3, vec3(1.0f), uv_v2);
+
+			vertices.push_back(temp);
+		}
+
+		for (OMesh::FaceIter f_i(mesh.faces_begin()); f_i != mesh.faces_end(); ++f_i) {
+			Face face;
+			int counter = 0;
+			for (OMesh::FaceVertexIter fv_i(mesh.fv_begin(*f_i)); fv_i != mesh.fv_end(*f_i); ++fv_i) {
+				if (counter == 0) {
+					face.a = fv_i->idx();
+				}
+				else if (counter == 1) {
+					face.b = fv_i->idx();
+				}
+				else if (counter == 2) {
+					face.c = fv_i->idx();
+					break;
+				}
+				counter++;
+			}
+
+			faces.push_back(face);
+		}
+
+		return new StaticMesh(vertices, faces);
+	
 	}
 
 	void CollapseEdge(OMesh::EdgeHandle eh) {
@@ -172,6 +305,10 @@ public:
 		return mesh.is_boundary(eh)
 			|| mesh.is_boundary(mesh.to_vertex_handle(hh0))
 			|| mesh.is_boundary(mesh.to_vertex_handle(hh1));
+	}
+
+	void DecimateRatio(float max_ratio) {
+		StaticDecimator::DecimateCluster(mesh, max_ratio);
 	}
 
 	void CollapseEdges() {
@@ -312,7 +449,11 @@ public:
 		mesh.garbage_collection();
 		try
 		{
-			if (!OpenMesh::IO::write_mesh(mesh, path))
+			OpenMesh::IO::Options ropt;
+			//ropt += OpenMesh::IO::Options::VertexNormal;
+			ropt += OpenMesh::IO::Options::VertexTexCoord;
+
+			if (!OpenMesh::IO::write_mesh(mesh, path, ropt))
 			{
 				std::cerr << "Cannot write mesh to file 'output.obj'" << std::endl;
 			}

@@ -70,6 +70,9 @@ inline float length(const vec2& v) { return sqrtf(dot(v, v)); }
 inline vec2 normalize(const vec2& v) { return v * (1 / length(v)); }
 
 inline vec2 operator*(float a, const vec2& v) { return vec2(v.x * a, v.y * a); }
+inline bool operator == (const vec2& a, const vec2& b) {
+	return (a.x == b.x && a.y == b.y);
+}
 
 //--------------------------
 struct vec3 {

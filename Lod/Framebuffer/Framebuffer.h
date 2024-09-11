@@ -5,6 +5,7 @@
 
 #include "../Texture/Texture.h"
 #include "../Shader.h"
+#include "../Uniform/ToolsUniformBlock.h"
 
 class Framebuffer {
 private:
@@ -65,12 +66,85 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
+	static void CreateObjNormalMap(Object3D* object, const char* file_path) {
+		Shader shader = Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
+		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
+		Shader* remember = object->Material().GetShader();
+		object->SetShader(&shader);
+
+		Framebuffer fb = Framebuffer(1024, 1024);
+		fb.Use();
+
+		object->Draw();
+
+		object->SetShader(remember);
+		fb.Save(file_path, true);
+		Framebuffer::UseDefault();
+	}
+
 	static void CreateObjNormalMap(Mesh* mesh, const char* file_path) {
 		Shader shader = Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
 		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
 		Object3D temp_obj = Object3D();
 		temp_obj.SetOriginalMesh(mesh);
+		mesh->Update(.0f);
 		temp_obj.SetShader(&shader);
+
+		Framebuffer fb = Framebuffer(2048, 2048);
+		fb.Use();
+
+		const float offset_amount = 0.002f;
+		const int   no_passes = 8;
+
+		ToolsUniformBlock tools_ubo = ToolsUniformBlock();
+		tools_ubo.Bind();
+
+		for (int i = 0; i < no_passes; i++) {
+			float angle = 2.0f * M_PI * i / no_passes;
+			tools_ubo.SetUVXOffset(offset_amount * cos(angle));
+			tools_ubo.SetUVYOffset(offset_amount * sin(angle));
+			temp_obj.Draw();
+		}
+
+		tools_ubo.SetUVXOffset(.0f);
+		tools_ubo.SetUVYOffset(.0f);
+		temp_obj.Draw();
+
+		fb.Save(file_path, true);
+		Framebuffer::UseDefault();
+	}
+
+	static void RenderUVMap(Object3D* object, const char* file_path) {
+		Shader shader = Shader("shaders/uv-map-render-vx.glsl", "shaders/uv-map-render-fg.glsl");
+		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
+		Shader* remember = object->Material().GetShader();
+		vec3 orig_draw_color = object->GetDrawColor();
+
+		object->SetShader(&shader);
+		object->SetDrawColor(vec3(0.3f, 0.3f, 0.3f));
+		object->EnableWireframe();
+
+		Framebuffer fb = Framebuffer(2048, 2048);
+		fb.Use();
+
+		object->Draw();
+
+		object->SetShader(remember);
+		object->SetDrawColor(orig_draw_color);
+		object->DisableWireframe();
+
+		fb.Save(file_path, true);
+		Framebuffer::UseDefault();
+	}
+
+	static void RenderUVMap(Mesh* mesh, const char* file_path) {
+		Shader shader = Shader("shaders/uv-map-render-vx.glsl", "shaders/uv-map-render-fg.glsl");
+		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
+		Object3D temp_obj = Object3D();
+		temp_obj.SetOriginalMesh(mesh);
+		temp_obj.SetShader(&shader);
+		temp_obj.SetDrawColor(vec3(0.3f, 0.3f, 0.3f));
+		temp_obj.EnableWireframe();
 
 		Framebuffer fb = Framebuffer(1024, 1024);
 		fb.Use();

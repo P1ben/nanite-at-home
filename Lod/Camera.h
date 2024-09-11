@@ -20,6 +20,8 @@ private:
 	// Projection properties
 	float fov, asp, fp, bp;
 
+	bool freezeViewMatrix = false;
+
 	// Helper functions
 	vec3 CalculateRotationVector(const vec2& axis);
 	vec3 CalculateMovementVector(const vec2& direction);
@@ -38,6 +40,8 @@ public:
 
 	// Sets the camera world position and updates the uniform block
 	void SetWorldPosition(const vec3& pos);
+
+	void SetFreezeViewMatrix(bool freeze);
 	
 	// Returns the camera world position
 	vec3 GetWorldPosition();

@@ -81,6 +81,12 @@ public:
 		this->SetUpdated(true);
 	};
 
+	StaticMesh(const StaticMesh& other) {
+		vertices = std::vector<Vertex>(other.vertices);
+		faces = std::vector<Face>(other.faces);
+		this->SetUpdated(true);
+	}
+
 	StaticMesh(std::string file_name, bool use_omesh_preliminary = false) {
 		if (use_omesh_preliminary) {
 			_ReadWithOMeshPRELIMINARY(file_name);
@@ -108,8 +114,10 @@ public:
 		vertices.reserve(V.rows());
 		faces.reserve(F.rows());
 
+		std::cout << "Mesh data: " << V.rows() << " vertices, " << F.rows() << " faces " << UV.rows() << " textcoords" << std::endl;
+
 		// If there are UV coordinates, load them as well
-		if (UV.size() > 0) {
+		if (UV.rows() > 0) {
 			for (int i = 0; i < V.rows(); i++) {
 				//printf("\t%f %f %f\n", V(i, 0), V(i, 1), V(i, 2));
 				vertices.push_back(Vertex(vec3(V(i, 0), V(i, 1), V(i, 2)), vec3(N(i, 0), N(i, 1), N(i, 2)), color, vec2(UV(i, 0), UV(i, 1))));
@@ -145,6 +153,19 @@ public:
 
 	void SetVertices(std::vector<Vertex>& vertices) {
 		this->vertices = std::vector<Vertex>(vertices);
+	}
+
+	void SetVertexColor(const vec3& color) {
+		for (Vertex& vert : vertices) {
+			vert.color = color;
+		}
+	}
+
+	void SetRandomVertexColor() {
+		vec3 color = vec3((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX);
+		for (Vertex& vert : vertices) {
+			vert.color = color;
+		}
 	}
 
 	void SetFaces(std::vector<Face>& faces) {

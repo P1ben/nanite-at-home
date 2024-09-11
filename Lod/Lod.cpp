@@ -25,6 +25,7 @@
 #include "GraphPartitioner.h"
 #include "Framebuffer/Framebuffer.h"
 #include "Texture/ObjectSpaceNormalMap.h"
+#include "ObjReader/ObjReader.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -130,7 +131,7 @@ Mesh* humanoid_mesh = nullptr;
 NaniteMesh* nanite_mesh = nullptr;
 
 Object3D* triangle = nullptr;
-Shader* shader = nullptr;
+Shader* maxblinn_shader = nullptr;
 Scene* scene = nullptr;
 Octree* tree = nullptr;
 
@@ -175,7 +176,7 @@ void Initialization() {
     //shader = new Shader("shaders/test-vx.glsl", "shaders/test-fg.glsl");
     
     // Max Blinn shader (plz use this)
-    shader = new Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
+    maxblinn_shader = new Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
     
     // Obj space normal shader test
     //shader = new Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
@@ -203,9 +204,25 @@ void Initialization() {
     ////lod_meshes.push_back(new StaticMesh("temp_decimator_mesh.obj"));
     /////////////////////////////////////////////////////////////
 
+    //////////// Simplify with incremental decimation test 2 ///////////
+    //humanoid_mesh = new StaticMesh("capsule.obj");
+    ////humanoid_mesh = ObjReader::ReadObj("capsule.obj");
+    //Decimator2 dm2 = Decimator2(humanoid_mesh);
+    //dm2.DecimateRatio(0.5);
+    //dm2.SaveMesh("capsule_decimated.obj");
+    ////ObjReader::SaveMesh(dm2.ConvertToStaticMesh(), "capsule_decimated.obj");
+
+    //lod_meshes.push_back(new StaticMesh("capsule_decimated.obj"));
+    /////////////////////////////////////////////////////////////
+
     // Load mesh with uv coords
     //lod_meshes.push_back(new StaticMesh("dragon_tex.obj"));
-    lod_meshes.push_back(new StaticMesh("capsule.obj"));
+    //lod_meshes.push_back(new StaticMesh("dragon.obj"));
+    //lod_meshes.push_back(new StaticMesh("capsule.obj"));
+    //lod_meshes.push_back(ObjReader::ReadObj("capsule.obj"));
+    //lod_meshes.push_back(new StaticMesh("Axe.obj"));
+
+    //lod_meshes.push_back(ObjReader::ReadObj("dragon_tex.obj"));
 
     // Load mesh
     //lod_meshes.push_back(new StaticMesh("output/output0.obj"));
@@ -218,9 +235,23 @@ void Initialization() {
     //lod_meshes.push_back(new StaticMesh("output/output7.obj"));
     //lod_meshes.push_back(new StaticMesh("output/output8.obj"));
 
+    //ObjReader::ReduceToTriangles("dino.obj", "dino_trimesh.obj");
+    //printf("Done.");
+
     //////////// Generate nanite mesh from static mesh ///////////
-    //humanoid_mesh = new StaticMesh("dragon.obj");
+    //const char* input_mesh_path  = "axe.obj";
+    //const char* output_mesh_path = "axe_nanite";
+    //const char* normal_map_path  = "normal_test\\normals_axe_test.jpg";
+
+    //humanoid_mesh = ObjReader::ReadObj(input_mesh_path);
+    ////humanoid_mesh = new StaticMesh(input_mesh_path);
     //Decimator2 dm2(humanoid_mesh);
+
+    //StaticMesh* temp_mesh = dm2.ConvertToStaticMesh();
+    //Framebuffer::CreateObjNormalMap(temp_mesh, normal_map_path);
+    //printf("Done.");
+    ////lod_meshes.push_back(temp_mesh);
+    //delete temp_mesh;
 
     //PRINT_TIME_TAKEN("Creating Nanite Mesh:", {
     //    nanite_mesh = dm2.GetNaniteMesh();
@@ -233,15 +264,21 @@ void Initialization() {
     //nanite_mesh->WriteClusterDetailsIntoFile(std::string("logs\\log.txt"));
 
     //PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
-    //    nanite_mesh->Save(std::string("real_nanite_mesh"));
+    //    nanite_mesh->Save(std::string(output_mesh_path));
     //})
 
     //printf("Done\n");
     /////////////////////////////////////////////////////////////
 
-    //////// Render loaded mesh /////////
+    //Decimator2::CreateNaniteMesh("vase.obj", "vase_nanite");
+    //printf("Done");
+    //lod_meshes.push_back(ObjReader::ReadObj("dino.obj"));
+
+    ////// Render loaded mesh /////////
+    //const char* input_mesh_folder = "axe_nanite";
+
     //PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
-    //    nanite_mesh = new NaniteMesh("real_nanite_mesh");
+    //    nanite_mesh = new NaniteMesh(input_mesh_folder);
     //})
     //
     //PRINT_TIME_TAKEN("Setting Step Boundaries:", {
@@ -250,7 +287,14 @@ void Initialization() {
 
     //lod_meshes.push_back(nanite_mesh);
     /////////////////////////////////////
+  //  PRINT_TIME_TAKEN("Loading Meshes:", {
+		//lod_meshes.push_back(ObjReader::ReadObj("axe.obj"));
+  //  })
+  //  std::cout << "Face count: " << lod_meshes[0]->GetFaces().size() << ", vertex count: " << lod_meshes[0]->GetVertices().size() << std::endl;
+  //  printf("Done.");
 
+    //Decimator2 dm2(ObjReader::ReadObj("Axe.obj"));
+    //lod_meshes.push_back(dm2.ConvertToStaticMesh());
 
     //NaniteMesh* nanite_mesh_small;
     //PRINT_TIME_TAKEN("Grouping Clusters:", {
@@ -343,11 +387,27 @@ void Initialization() {
     //})
 
     triangle = new Object3D();
+    PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
+		triangle = Object3D::LoadNaniteObject("axe_nanite", true);
+	})
+    //triangle = Object3D::LoadNaniteObject("axe_nanite", true);
     //triangle->SetOriginalMesh(humanoid_mesh);
-    triangle->SetOriginalMesh(lod_meshes[0]);
+    //triangle->SetOriginalMesh(lod_meshes[0]);
 
-    triangle->SetShader(shader);
+    triangle->SetShader(maxblinn_shader);
     triangle->SetDrawColor(vec3(1.0f, 0.0f, 0));
+
+    // Axe
+    triangle->SetModelMatrix(ScaleMatrix(vec3(0.02, 0.02, 0.02)));
+
+    // Package
+    //triangle->SetModelMatrix(ScaleMatrix(vec3(0.1, 0.1, 0.1)));
+
+    //Vase
+    //triangle->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
+
+    // Dino
+    //triangle->SetModelMatrix(RotationMatrix(M_PI, vec3(.0f, 1, .0f)));
     //triangle->Material().SetUniform("useTrueColor", false);
 
     scene = new Scene();
@@ -360,11 +420,19 @@ void Initialization() {
     scene->ZoomCamera(0.0f);
 
 
+    // Do not use these on NaniteMesh, the result is not pretty
     // Normal map extraction test
-    Framebuffer::CreateObjNormalMap(lod_meshes[0], "result.jpg");
+    //Framebuffer::CreateObjNormalMap(triangle, "axe_normal.jpg");
 
-    ObjectSpaceNormalMap* capsule_normal_map = new ObjectSpaceNormalMap("result.jpg", true);
-    triangle->AttachObjectSpaceNormalMap(capsule_normal_map);
+    //ObjectSpaceNormalMap* capsule_normal_map = new ObjectSpaceNormalMap("axe_nanite\\normals.jpg", true);
+    //triangle->AttachObjectSpaceNormalMap(capsule_normal_map);
+    //////////////////////////////////////
+
+    //ColorMap* cm = new ColorMap("axe_nanite\\texture.png", true);
+    //triangle->AttachColorMap(cm);
+
+    // Render UV map
+    //Framebuffer::RenderUVMap(triangle, "uv_map.jpg");
     //////////////////////////////////////
 
     //Framebuffer fb = Framebuffer(1024, 1024);
@@ -387,8 +455,10 @@ Mesh* current_mesh = nullptr;
 bool algo_changed = false;
 Algorithm current_algo = ALG_SIMPLE_AVG;
 
-int frames_elapsed = 0;
+int  frames_elapsed = 0;
 bool animation_started = false;
+
+bool camera_frozen = false;
 
 /* Our program's entry point */
 int main(int argc, char* argv[])
@@ -533,14 +603,25 @@ int main(int argc, char* argv[])
             }
         }
 
-        if (ImGui::Button("Lock Camera")) {
-            //triangle->DisableMVPUpdate();
+        if (ImGui::Button("Freeze/Unfreeze Camera")) {
+            camera_frozen = !camera_frozen;
+            scene->SetFreezeViewMatrix(camera_frozen);
         }
 
-        if (ImGui::Button("Unlock Camera")) {
-            //triangle->EnableMVPUpdate();
-        }
+        if (ImGui::Button("Save UV map")) {
+            Framebuffer::RenderUVMap(triangle, "uv_map.jpg");
+		}
 
+        ImGui::SliderFloat("Blue", &current_color.z, 0.0f, 1.0f);
+
+        ImGui::End();
+
+        ImGui::Begin("Shader");
+        if (ImGui::Button("Reload")) {
+            if (maxblinn_shader) {
+                maxblinn_shader->Reload();
+            }
+        }
         ImGui::End();
 
 
@@ -560,6 +641,7 @@ int main(int argc, char* argv[])
 
         frames_elapsed++;
 
+        scene->Update();
         scene->Draw();
 
         ImGui::Render();
@@ -571,7 +653,7 @@ int main(int argc, char* argv[])
     delete triangle_mesh;
     delete humanoid_mesh;
     delete triangle;
-    delete shader;
+    delete maxblinn_shader;
 
     for (Mesh* msh : simplified_mesh_array_simple) {
         delete msh;
