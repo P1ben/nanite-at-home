@@ -3,6 +3,7 @@
 #include "../framework.h"
 #include "../StaticDecimator.h"
 #include "../StaticMesh.h"
+#include "../ObjReader/ObjReader.h"
 
 class Cluster {
 	CLUSTER_ID id = 0;
@@ -46,15 +47,17 @@ class Cluster {
 	// Returns the handle of the added vertex
 	OMesh::VertexHandle CopyVertexNoDupl(const OMesh& mesh, OMesh::VertexHandle vh) {
 		for (OMesh::VertexIter v_it = inner_mesh.vertices_begin(); v_it != inner_mesh.vertices_end(); ++v_it) {
-			if (inner_mesh.point(*v_it) == mesh.point(vh))
+			if (inner_mesh.point(*v_it) == mesh.point(vh) && inner_mesh.texcoord2D(*v_it) == mesh.texcoord2D(vh))
 				return *v_it;
 		}
 
 		OMesh::Point new_vert = mesh.point(vh);
 		OMesh::Normal new_normal = mesh.normal(vh);
+		OMesh::TexCoord2D new_tex = mesh.texcoord2D(vh);
 
 		OMesh::VertexHandle vh_n = inner_mesh.add_vertex(new_vert);
 		inner_mesh.set_normal(vh_n, new_normal);
+		inner_mesh.set_texcoord2D(vh_n, new_tex);
 
 		return vh_n;
 	}
@@ -71,18 +74,25 @@ public:
 		color.x = (float)rand() / RAND_MAX;
 		color.y = (float)rand() / RAND_MAX;
 		color.z = (float)rand() / RAND_MAX;
+
+		inner_mesh.request_vertex_normals();
+		inner_mesh.request_vertex_texcoords2D();
 	}
 
 	// Adds necessary vertices and the triangle provided to the cluster
 	void CopyTriangle(const OMesh& mesh, OMesh::FaceHandle fh) {
 		std::vector<OMesh::VertexHandle> temp;
 		temp.reserve(3);
+		if (mesh.calc_face_area(fh) == .0f) {
+			return;
+		}
 
 		for (OMesh::ConstFaceVertexIter fv_it(mesh.cfv_iter(fh)); fv_it.is_valid(); ++fv_it) {
 			temp.push_back(CopyVertexNoDupl(mesh, *fv_it));
 		}
-
+		//if (temp[0] != temp[1] && temp[1] != temp[2] && temp[0] != temp[2]) {
 		inner_mesh.set_normal(inner_mesh.add_face(temp[0], temp[1], temp[2]), mesh.normal(fh));
+		//}
 	}
 
 	void Append(Cluster& cluster) {
@@ -136,9 +146,9 @@ public:
 		//float calc_metric = 1 / metric * 1080;
 		float calc_metric = metric * metric / 25;
 
-		if (id > 1550) {
-			printf("\tCluster %d: Metric: %f Current: %f\n", id, calc_metric, error);
-		}
+		//if (id > 1550) {
+		//	printf("\tCluster %d: Metric: %f Current: %f\n", id, calc_metric, error);
+		//}
 		/*return childsib_triangle_density > calc_metric;*/
 
 		// Prone to error, but looks good on dragon mesh
@@ -508,7 +518,11 @@ public:
 	}
 
 	void Save(const std::string& path, FILE* config_file) {
-		if (!OpenMesh::IO::write_mesh(inner_mesh, path))
+		OpenMesh::IO::Options wopt;
+		//wopt += OpenMesh::IO::Options::VertexNormal;
+		wopt += OpenMesh::IO::Options::VertexTexCoord;
+
+		if (!OpenMesh::IO::write_mesh(inner_mesh, path, wopt))
 		{
 			std::cerr << "Couldn't save cluster (tough luck)\n";
 			return;
@@ -572,8 +586,13 @@ public:
 		//inner_mesh.update_face_normals();
 		//inner_mesh.update_vertex_normals();
 
-		inner_static_mesh = StaticMesh(file_path);
 
+		StaticMesh*	temp_mesh = ObjReader::ReadObj(file_path.c_str());
+		inner_static_mesh = StaticMesh(*temp_mesh);
+
+		delete temp_mesh;
+
+		inner_static_mesh.SetRandomVertexColor();
 		//printf("Cluster data:\n");
 		//printf("\tArea: %f\n", area);
 		//printf("\tDensity: %f\n", triangle_density);

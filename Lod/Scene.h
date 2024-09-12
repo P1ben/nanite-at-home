@@ -9,13 +9,16 @@ private:
 	Camera* camera = nullptr;
 	std::vector<Object3D*> objects;
 
+
 public:
 	Scene();
 	~Scene();
 
 	void SetCamera(const vec3& pos, const vec3& target, const vec3& up_dir, float fov, float asp, float near_plane, float far_plane);
 	void AddObject(Object3D* object);
+	void SetFreezeViewMatrix(bool freeze);
 
+	void Update();
 	void Draw();
 
 	void ZoomCamera(float amount);

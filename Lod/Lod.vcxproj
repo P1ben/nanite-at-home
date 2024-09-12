@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\imgui\include;$(SolutionDir)\libraries\Eigen\include;$(SolutionDir)\libraries\GLEW\include;$(SolutionDir)\libraries\SDL2\include;$(SolutionDir)\libraries\libigl\include;$(SolutionDir)\libraries\OpenMesh\include;$(SolutionDir)\libraries\METIS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\libraries\imgui\include;$(SolutionDir)\libraries\Eigen\include;$(SolutionDir)\libraries\GLEW\include;$(SolutionDir)\libraries\SDL2\include;$(SolutionDir)\libraries\libigl\include;$(SolutionDir)\libraries\OpenMesh\include;$(SolutionDir)\libraries\METIS\include;$(SolutionDir)\libraries\3pp\stb_image\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,6 +136,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="3pp\stb_image.cpp" />
+    <ClCompile Include="3pp\stb_image_write.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -152,6 +154,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClCompile Include="ThreadPool\ThreadPool.cpp" />
     <ClCompile Include="Uniform\CameraUniformBlock.cpp" />
     <ClCompile Include="Uniform\Object3DUniformBlock.cpp" />
+    <ClCompile Include="Uniform\ToolsUniformBlock.cpp" />
     <ClCompile Include="Uniform\UniformBuffer.cpp" />
     <ClCompile Include="VecLib\VecLib.cpp" />
   </ItemGroup>
@@ -162,6 +165,11 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="EdgeCollection.h" />
     <ClInclude Include="Face.h" />
     <ClInclude Include="FaceGroup.h" />
+    <ClInclude Include="Framebuffer\Framebuffer.h" />
+    <ClInclude Include="ObjReader\ObjReader.h" />
+    <ClInclude Include="Texture\ColorMap.h" />
+    <ClInclude Include="Texture\ObjectSpaceNormalMap.h" />
+    <ClInclude Include="Texture\Texture.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GPUBuffer.h" />
     <ClInclude Include="GraphPartitioner.h" />
@@ -185,6 +193,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="ThreadPool\ThreadPool.h" />
     <ClInclude Include="Uniform\CameraUniformBlock.h" />
     <ClInclude Include="Uniform\Object3DUniformBlock.h" />
+    <ClInclude Include="Uniform\ToolsUniformBlock.h" />
     <ClInclude Include="Uniform\UniformBuffer.h" />
     <ClInclude Include="VecLib\VecLib.h" />
     <ClInclude Include="Vertex.h" />

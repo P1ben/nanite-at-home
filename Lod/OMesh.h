@@ -15,7 +15,7 @@ struct MeshTraits : public OpenMesh::DefaultTraits
 		void  set_error(float _err) { error_ = _err; }
 	};
 
-	VertexAttributes(OpenMesh::Attributes::Normal);
+	VertexAttributes(OpenMesh::Attributes::Normal | OpenMesh::Attributes::TexCoord2D);
 	FaceAttributes(OpenMesh::Attributes::Normal);
 };
 

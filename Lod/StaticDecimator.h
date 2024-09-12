@@ -148,13 +148,26 @@ public:
 				VertexHandle   rem_vh = cluster_mesh.to_vertex_handle(hh);
 				VertexHandle   del_vh = cluster_mesh.to_vertex_handle(cluster_mesh.opposite_halfedge_handle(hh));
 
-				cluster_mesh.set_point(rem_vh, GetNewPointByQEF2OMesh(cluster_mesh, rem_vh, del_vh, 0.002f));
+				OMesh::Point new_point     = GetNewPointByQEF2OMesh(cluster_mesh, rem_vh, del_vh, 0.002f);
+				OMesh::Point old_point     = cluster_mesh.point(rem_vh);
+				OMesh::Point deleted_point = cluster_mesh.point(del_vh);
+
+				float ratio = ((new_point - old_point).length() / (deleted_point - old_point).length());
+
+				OMesh::TexCoord2D rem_tex = cluster_mesh.texcoord2D(rem_vh);
+				OMesh::TexCoord2D del_tex = cluster_mesh.texcoord2D(del_vh);
+
+				OMesh::TexCoord2D new_tex = rem_tex + (del_tex - rem_tex) * ratio;
+				//OMesh::TexCoord2D new_tex = del_tex;
+
+				cluster_mesh.set_point(rem_vh, new_point);
+				cluster_mesh.set_texcoord2D(rem_vh, new_tex);
 				introduced_error += cluster_mesh.data(cluster_mesh.edge_handle(hh)).error();
 				cluster_mesh.collapse(hh);
 
-				for (OMesh::VertexFaceIter vfi(cluster_mesh.vf_begin(rem_vh)); vfi.is_valid(); ++vfi) {
-					cluster_mesh.set_normal(*vfi, cluster_mesh.calc_face_normal(*vfi));
-				}
+				//for (OMesh::VertexFaceIter vfi(cluster_mesh.vf_begin(rem_vh)); vfi.is_valid(); ++vfi) {
+				//	cluster_mesh.set_normal(*vfi, cluster_mesh.calc_face_normal(*vfi));
+				//}
 
 				for (OMesh::VertexEdgeIter vei(cluster_mesh.ve_begin(rem_vh)); vei.is_valid(); ++vei) {
 					edges_set.erase(*vei);

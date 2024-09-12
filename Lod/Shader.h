@@ -27,6 +27,9 @@ private:
 	std::string vertexCode;
 	std::string fragmentCode;
 
+	std::string vertexPath;
+	std::string fragmentPath;
+
 	static uint32_t LAST_PROGRAM_LOADED;
 
 	void Compile();
@@ -34,13 +37,11 @@ private:
 	void ReadFragmentShader(const char* fragment_path);
 public:
 	Shader(const char* vertex_path, const char* fragment_path);
+	~Shader();
+
+	void Reload();
 	void Activate();
 
-	void SetBool(Uniform& uniform);
-	void SetInt(Uniform& uniform);
-	void SetFloat(Uniform& uniform);
-	void SetVec3(Uniform& uniform);
-	void SetMat4(Uniform& uniform);
 	std::string GetCode() {
 		std::string concat = vertexCode + fragmentCode;
 		return concat;

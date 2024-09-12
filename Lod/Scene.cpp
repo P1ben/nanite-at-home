@@ -1,5 +1,15 @@
 #include "Scene.h"
 
+void Scene::Update()
+{
+	if (camera) {
+		const vec3& camera_pos = camera->GetWorldPosition();
+		for (auto obj : objects) {
+			obj->UpdateMesh(camera_pos);
+		}
+	}
+}
+
 Scene::Scene() {}
 
 Scene::~Scene() {
@@ -16,6 +26,12 @@ void Scene::SetCamera(const vec3& pos, const vec3& target, const vec3& up_dir, f
 
 void Scene::AddObject(Object3D* object) {
 	objects.push_back(object);
+}
+
+void Scene::SetFreezeViewMatrix(bool freeze) {
+	if (camera) {
+		camera->SetFreezeViewMatrix(freeze);
+	}
 }
 
 void Scene::Draw() {

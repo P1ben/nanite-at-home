@@ -16,6 +16,10 @@ public:
 		}
 	}
 
+	Shader* GetShader() {
+		return shader;
+	}
+
 	ShaderMaterial(Shader* shader) {
 		SetShader(shader);
 	}

@@ -60,8 +60,10 @@ Camera::~Camera() {
 }
 
 void Camera::RecalculateViewMatrix() {
-	viewMatrix = ViewMatrix(worldPosition, targetPoint, upDir);
-	uniform_block->SetViewMatrix(viewMatrix);
+	if (!freezeViewMatrix) {
+		viewMatrix = ViewMatrix(worldPosition, targetPoint, upDir);
+		uniform_block->SetViewMatrix(viewMatrix);
+	}
 }
 
 void Camera::RecalculateProjectionMatrix() { // projection matrix
@@ -72,6 +74,10 @@ void Camera::RecalculateProjectionMatrix() { // projection matrix
 void Camera::SetWorldPosition(const vec3& pos) {
 	worldPosition = pos;
 	uniform_block->SetCameraPosition(worldPosition);
+}
+
+void Camera::SetFreezeViewMatrix(bool freeze) {
+	freezeViewMatrix = freeze;
 }
 
 vec3 Camera::GetWorldPosition() {
@@ -88,7 +94,7 @@ void Camera::Zoom(float amount) {
 }
 
 void Camera::Orbit(float radians, const vec2& axis) {
-	this->worldPosition = Quaternion::Rotate(this->worldPosition, radians, CalculateRotationVector(axis));
+	SetWorldPosition(Quaternion::Rotate(this->worldPosition, radians, CalculateRotationVector(axis)));
 	//printf("Camera pos: %f, %f, %f\n", worldPosition.x, worldPosition.y, worldPosition.z);
 	RecalculateViewMatrix();
 }
@@ -97,7 +103,6 @@ void Camera::Move(float amount, const vec2& direction) {
 	vec3 dir_vec = CalculateMovementVector(direction);
 	this->targetPoint = this->targetPoint + amount * dir_vec;
 	SetWorldPosition(this->worldPosition + amount * dir_vec);
-	printf("Move.");
 	//printf("Camera pos: %f, %f, %f\n", worldPosition.x, worldPosition.y, worldPosition.z);
 	//printf("Lookat pos: %f, %f, %f\n", targetPoint.x, targetPoint.y, targetPoint.z);
 	RecalculateViewMatrix();

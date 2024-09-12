@@ -7,9 +7,16 @@
 uint32_t Shader::LAST_PROGRAM_LOADED = 0;
 
 Shader::Shader(const char* vertex_path, const char* fragment_path) {
+    vertexPath   = vertex_path;
+    fragmentPath = fragment_path;
     ReadVertexShader(vertex_path);
     ReadFragmentShader(fragment_path);
     Compile();
+}
+
+Shader::~Shader()
+{
+	glDeleteProgram(Id);
 }
 
 void Shader::ReadVertexShader(const char* vertex_path) {
@@ -105,10 +112,15 @@ void Shader::Compile() {
         glGetProgramInfoLog(Id, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
+    else {
+        std::cout << "SUCCESS::SHADER::PROGRAM::COMPILED_SUCCESSFULLY" << std::endl;
+    }
 
     // Delete shaders from gpu memory
     if (vertex_code)   glDeleteShader(vertex);
     if (fragment_code) glDeleteShader(fragment);
+
+    // This part is only for debugging purposes
 
     GLuint blockIndex = glGetUniformBlockIndex(Id, "Object");
 
@@ -121,21 +133,34 @@ void Shader::Compile() {
 
     GLubyte* blockBuffer = (GLubyte*)malloc(blockSize);
 
-    const GLchar* names[] = { "modelMatrix","modelMatrixInverse", "drawColor", "useTrueColor"};
+    const GLchar* names[] = { "modelMatrix",
+                              "modelMatrixInverse", 
+                              "drawColor", 
+                              "useTrueColor", 
+                              "useColorTexture",
+                              "useObjectSpaceNormalTexture"};
 
-    GLuint indices[4];
-    glGetUniformIndices(Id, 4, names, indices);
+    GLuint indices[6];
+    glGetUniformIndices(Id, 6, names, indices);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 6; ++i) {
         std::cout << "attribute \"" << names[i] << "\" has index: " << indices[i] << " in the block.\n";
     }
 
-    GLint offset[4];
-    glGetActiveUniformsiv(Id, 4, indices, GL_UNIFORM_OFFSET, offset);
+    GLint offset[6];
+    glGetActiveUniformsiv(Id, 6, indices, GL_UNIFORM_OFFSET, offset);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 6; ++i) {
         std::cout << "attribute \"" << names[i] << "\" has offset: " << offset[i] << " in the block.\n";
     }
+}
+
+void Shader::Reload()
+{
+    glDeleteProgram(Id);
+	ReadVertexShader(vertexPath.c_str());
+	ReadFragmentShader(fragmentPath.c_str());
+	Compile();
 }
 
 void Shader::Activate() {
@@ -143,21 +168,4 @@ void Shader::Activate() {
         glUseProgram(Id);
         LAST_PROGRAM_LOADED = Id;
     }
-}
-
-// Uniform Setters
-void Shader::SetBool(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_bool);
-}
-void Shader::SetInt(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_int);
-}
-void Shader::SetFloat(Uniform& uniform) {
-    glUniform1i(glGetUniformLocation(Id, uniform.name.c_str()), uniform.val_float);
-}
-void Shader::SetVec3(Uniform& uniform) {
-    glUniform3fv(glGetUniformLocation(Id, uniform.name.c_str()), 1, &uniform.val_vec3.x);
-}
-void Shader::SetMat4(Uniform& uniform) {
-    glUniformMatrix4fv(glGetUniformLocation(Id, uniform.name.c_str()), 1, GL_TRUE, uniform.val_mat4);
 }
