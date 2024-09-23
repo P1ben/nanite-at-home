@@ -66,6 +66,16 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
+	static void RenderOntoImage(Scene* scene, const char* file_path, uint32_t img_w, uint32_t img_h) {
+		Framebuffer fb = Framebuffer(img_w, img_h);
+		fb.Use();
+
+		scene->Draw();
+
+		fb.Save(file_path, true);
+		Framebuffer::UseDefault();
+	}
+
 	static void CreateObjNormalMap(Object3D* object, const char* file_path) {
 		Shader shader = Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
 		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");

@@ -159,6 +159,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClCompile Include="VecLib\VecLib.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Benchmark\Benchmark.h" />
+    <ClInclude Include="Benchmark\CSVWriter.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Decimator.h" />
     <ClInclude Include="Decimator2.h" />
@@ -166,6 +168,9 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="Face.h" />
     <ClInclude Include="FaceGroup.h" />
     <ClInclude Include="Framebuffer\Framebuffer.h" />
+    <ClInclude Include="Metrics\FPSCounter.h" />
+    <ClInclude Include="Metrics\ImageErrorCalculator.h" />
+    <ClInclude Include="Metrics\Timer.h" />
     <ClInclude Include="ObjReader\ObjReader.h" />
     <ClInclude Include="Texture\ColorMap.h" />
     <ClInclude Include="Texture\ObjectSpaceNormalMap.h" />

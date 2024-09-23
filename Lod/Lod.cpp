@@ -26,6 +26,9 @@
 #include "Framebuffer/Framebuffer.h"
 #include "Texture/ObjectSpaceNormalMap.h"
 #include "ObjReader/ObjReader.h"
+#include "Metrics/FPSCounter.h"
+#include "Metrics/ImageErrorCalculator.h"
+#include "Benchmark/Benchmark.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -130,7 +133,9 @@ Mesh* triangle_mesh = nullptr;
 Mesh* humanoid_mesh = nullptr;
 NaniteMesh* nanite_mesh = nullptr;
 
-Object3D* triangle = nullptr;
+Object3D* nanite_obj    = nullptr;
+Object3D* nanite_obj2   = nullptr;
+Object3D* reference_obj = nullptr;
 Shader* maxblinn_shader = nullptr;
 Scene* scene = nullptr;
 Octree* tree = nullptr;
@@ -148,6 +153,8 @@ std::vector<Mesh*> simplified_mesh_array_simple;
 std::vector<Mesh*> simplified_mesh_array_qef;
 std::vector<Mesh*> lod_meshes;
 
+std::vector<float> distances;
+
 void Initialization() {
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     glPolygonOffset(1, 1);
@@ -156,11 +163,12 @@ void Initialization() {
     glEnable(GL_BLEND);
     glDepthFunc(GL_LESS);
     glLineWidth(1);
-    glEnable(GL_MULTISAMPLE);
+    //glEnable(GL_MULTISAMPLE);
     glFrontFace(GL_CCW);
+    SDL_GL_SetSwapInterval(0);
 
     glCullFace(GL_BACK);
-    glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     std::vector<vec3> vertices;
     std::vector<Face> faces;
@@ -181,6 +189,11 @@ void Initialization() {
     // Obj space normal shader test
     //shader = new Shader("shaders/obj-space-normal-vx.glsl", "shaders/obj-space-normal-fg.glsl");
 
+    //ImageErrorCalculator iec = ImageErrorCalculator();
+    //iec.LoadReferenceImage("imgcomp_test\\normals_save.jpg");
+    //iec.LoadTestImage("imgcomp_test\\normals_save2.jpg");
+    //printf("Result of img test: %lf\n", iec.PerformTest("imgcomp_test\\test_result.png"));
+    //printf("Done.");
 
     //humanoid_mesh = OBJParser::Parse("humanoid.obj");
     //humanoid_mesh = new Mesh("humanoid.obj");
@@ -385,39 +398,75 @@ void Initialization() {
     //    printf("\tCommon point: %u\n", collection.FindCommonPoint(0U, 71384U, 71385U));
     //    })
     //})
+    
+	const char* nanite_path       = "vase_nanite";
+    const char* reference_path    = "vase.obj";
+    const char* reference_texture = "vase.jpg";
 
-    triangle = new Object3D();
+    Decimator2 dm2(ObjReader::ReadObj(reference_path));
+    Mesh* dino_mesh = dm2.ConvertToStaticMesh();
+    //Mesh* dino_mesh = ObjReader::ReadObj("axe.obj");
+    reference_obj = new Object3D();
+    reference_obj->SetOriginalMesh(dino_mesh);
+    reference_obj->SetShader(maxblinn_shader);
+    reference_obj->SetDrawColor(vec3(1.0f, 0.0f, 0));
+    reference_obj->AttachColorMap(new ColorMap(reference_texture, true));
+    //reference_obj->AttachObjectSpaceNormalMap(new ObjectSpaceNormalMap("axe_nanite\\normals.jpg", true));
+
     PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
-		triangle = Object3D::LoadNaniteObject("axe_nanite", true);
+        nanite_obj = Object3D::LoadNaniteObject(nanite_path, true);
 	})
     //triangle = Object3D::LoadNaniteObject("axe_nanite", true);
     //triangle->SetOriginalMesh(humanoid_mesh);
     //triangle->SetOriginalMesh(lod_meshes[0]);
 
-    triangle->SetShader(maxblinn_shader);
-    triangle->SetDrawColor(vec3(1.0f, 0.0f, 0));
+    nanite_obj->SetShader(maxblinn_shader);
+    nanite_obj->SetDrawColor(vec3(1.0f, 0.0f, 0));
 
     // Axe
-    triangle->SetModelMatrix(ScaleMatrix(vec3(0.02, 0.02, 0.02)));
+    //nanite_obj->SetModelMatrix(ScaleMatrix(vec3(0.02, 0.02, 0.02)));
+    //reference_obj->SetModelMatrix(ScaleMatrix(vec3(0.02, 0.02, 0.02)));
 
     // Package
-    //triangle->SetModelMatrix(ScaleMatrix(vec3(0.1, 0.1, 0.1)));
+    //nanite_obj->SetModelMatrix(ScaleMatrix(vec3(0.1, 0.1, 0.1)));
 
     //Vase
-    //triangle->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
+    nanite_obj->SetScale(vec3(0.002, 0.002, 0.002));
+    nanite_obj->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
+    nanite_obj->SetWorldPosition(vec3(1, 0, 0));
+
+    reference_obj->SetScale(vec3(0.002, 0.002, 0.002));
+    reference_obj->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
+    reference_obj->SetWorldPosition(vec3(1, 0, 0));
+
+    //nanite_obj->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
+    //reference_obj->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
 
     // Dino
-    //triangle->SetModelMatrix(RotationMatrix(M_PI, vec3(.0f, 1, .0f)));
+    //nanite_obj->SetModelMatrix(RotationMatrix(M_PI, vec3(.0f, 1, .0f)));
+    //reference_obj->SetModelMatrix(RotationMatrix(M_PI, vec3(.0f, 1, .0f)));
     //triangle->Material().SetUniform("useTrueColor", false);
 
     scene = new Scene();
     //scene->SetCamera(vec3(0, 0, -1), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
     scene->SetCamera(vec3(-3.190557, 6.917207, -9.062605), vec3(-0.379691, 4.304642, 0.749835), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
-    scene->AddObject(triangle);
+    scene->AddObject(nanite_obj);
+
+    nanite_obj2 = new Object3D();
+    nanite_obj2->SetOriginalMesh(nanite_obj->GetMesh());
+    nanite_obj2->SetShader(maxblinn_shader);
+    nanite_obj2->SetDrawColor(vec3(1.0f, 0.0f, 0));
+    nanite_obj2->AttachColorMap(new ColorMap(reference_texture, true));
+    nanite_obj2->SetScale(vec3(0.002, 0.002, 0.002));
+    nanite_obj2->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
+    nanite_obj2->SetWorldPosition(vec3(-1, 0, 0));
+    scene->AddObject(nanite_obj2);
     
     // Fixes weird bug with shading
     scene->Draw();
     scene->ZoomCamera(0.0f);
+
+    //Framebuffer::RenderOntoImage(scene, "imgcomp_test\\dino.jpg", 1920, 1080);
 
 
     // Do not use these on NaniteMesh, the result is not pretty
@@ -442,6 +491,15 @@ void Initialization() {
     //Framebuffer::UseDefault();
 
     //triangle->DisableMVPUpdate();
+    
+    // Init sampling distances for benchmarking
+    float start_dist = 2.0f;
+    float end_dist   = 20.0f;
+    float step       = 5.f;
+
+    for (float i = start_dist; i <= end_dist; i += step) {
+		distances.push_back(i);
+	}
 }
 
 int current_simplificaton_rate = 0;
@@ -460,6 +518,8 @@ bool animation_started = false;
 
 bool camera_frozen = false;
 
+FPSCounter fps_counter;
+
 /* Our program's entry point */
 int main(int argc, char* argv[])
 {
@@ -470,6 +530,10 @@ int main(int argc, char* argv[])
     Initialization();
 
     bool quit = false;
+    std::vector<const char*> items{ "a", "b", "c" }; // defined somewhere
+    int selectedIndex = 0; // you need to store this state somewhere
+
+    fps_counter.Start();
 
     while (!quit) {
         SDL_Event event;
@@ -560,7 +624,7 @@ int main(int argc, char* argv[])
         ImGui::Text("Current algorithm:\n");
         ImGui::Text(current_algo == ALG_QEF ? "QEF" : "Simple Average");
         ImGui::Text("Number of faces:\n");
-        ImGui::Text("%d", triangle->GetMesh()->GetFaceCount());
+        ImGui::Text("%d", reference_obj->GetMesh()->GetFaceCount());
         if (ImGui::Button("Switch method")) {
             if (current_algo == ALG_SIMPLE_AVG) {
                 current_algo = ALG_QEF;
@@ -580,15 +644,15 @@ int main(int argc, char* argv[])
 
         if (current_color != old_color) {
             old_color = current_color;
-            triangle->SetDrawColor(current_color);
+            nanite_obj->SetDrawColor(current_color);
         }
 
         if (ImGui::Button("Toggle Wireframe")) {
-            triangle->SwitchWireframe();
+            nanite_obj->SwitchWireframe();
         }
 
         if (ImGui::Button("Toggle TrueColor")) {
-            triangle->ToggleTrueColor();
+            nanite_obj->ToggleTrueColor();
         }
 
         if (ImGui::Button("Increase Quality")) {
@@ -609,12 +673,31 @@ int main(int argc, char* argv[])
         }
 
         if (ImGui::Button("Save UV map")) {
-            Framebuffer::RenderUVMap(triangle, "uv_map.jpg");
+            Framebuffer::RenderUVMap(nanite_obj, "uv_map.jpg");
 		}
 
         ImGui::SliderFloat("Blue", &current_color.z, 0.0f, 1.0f);
 
         ImGui::End();
+
+        //ImGui::Begin("Test");
+
+        //if (ImGui::BeginListBox("Test")) {
+        //    for (int i = 0; i < items.size(); ++i) {
+        //        const bool isSelected = (selectedIndex == i);
+        //        if (ImGui::Selectable(items[i], isSelected)) {
+        //            selectedIndex = i;
+        //        }
+
+        //        // Set the initial focus when opening the combo
+        //        // (scrolling + keyboard navigation focus)
+        //        if (isSelected) {
+        //            ImGui::SetItemDefaultFocus();
+        //        }
+        //    }
+        //}
+        //ImGui::EndListBox();
+        //ImGui::End();
 
         ImGui::Begin("Shader");
         if (ImGui::Button("Reload")) {
@@ -624,6 +707,30 @@ int main(int argc, char* argv[])
         }
         ImGui::End();
 
+        ImGui::Begin("Performance");
+
+        ImGui::Text("Current FPS:");
+        ImGui::Text(std::to_string(fps_counter.GetLastFPS()).c_str());
+        ImGui::Text("Moving Average FPS:");
+        ImGui::Text(std::to_string(fps_counter.GetFPSAvg()).c_str());
+        ImGui::Text("Last Frame Time (ms):");
+        ImGui::Text(std::to_string(fps_counter.GetLastFrametime()).c_str());
+        if (ImGui::Button("Start Stationary FPS Benchmark")) {
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 5);
+        }
+
+        if (ImGui::Button("Start Image Difference Benchmark")) {
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances);
+        }
+
+        if (ImGui::Button("Start Combined Benchmark")) {
+            std::string date_str = Timer::GetCurrentTimeStr();
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 5, date_str.c_str());
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, date_str.c_str());
+        }
+
+        ImGui::End();
+
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -631,7 +738,7 @@ int main(int argc, char* argv[])
 
         if (current_simplificaton_rate != old_simplification_rate || algo_changed) {
             old_simplification_rate = current_simplificaton_rate;
-            triangle->SetMesh(lod_meshes[current_simplificaton_rate]);
+            nanite_obj->SetMesh(lod_meshes[current_simplificaton_rate]);
             algo_changed = false;
         }
 
@@ -647,12 +754,14 @@ int main(int argc, char* argv[])
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
+        fps_counter.Update();
     }
 
     delete scene;
     delete triangle_mesh;
     delete humanoid_mesh;
-    delete triangle;
+    delete nanite_obj;
+    delete reference_obj;
     delete maxblinn_shader;
 
     for (Mesh* msh : simplified_mesh_array_simple) {

@@ -17,7 +17,11 @@ private:
 	Object3DUniformBlock* uniform_block;
 
 	// Uniforms
-	vec3 worldPosition = vec3(0.0, 0.0, 0.0);
+	vec3  worldPosition = vec3(0.0, 0.0, 0.0);
+	vec3  rotation      = vec3(0.0, 0.0, 0.0);
+	float rotationAngle = 0.0f;
+	vec3  scale         = vec3(1.0, 1.0, 1.0);
+
 	mat4 modelMatrix = IdentityMatrix();
 	vec3 drawColor = vec3(1.0, 1.0, 1.0);
 	bool useTrueColor = false;
@@ -52,6 +56,36 @@ public:
 		uniform_block->SetModelMatrixInverse(Invert(modelMatrix));
 		uniform_block->SetDrawColor(drawColor);
 		uniform_block->SetUseTrueColor(useTrueColor);
+	}
+
+	Object3D(const Object3D& other) {
+		this->worldPosition = other.worldPosition;
+		this->rotation = other.rotation;
+		this->rotationAngle = other.rotationAngle;
+		this->scale = other.scale;
+		this->modelMatrix = other.modelMatrix;
+		this->drawColor = other.drawColor;
+		this->useTrueColor = other.useTrueColor;
+		this->useColorTexture = other.useColorTexture;
+		this->colorTexture = other.colorTexture;
+		this->useObjectSpaceNormalTexture = other.useObjectSpaceNormalTexture;
+		this->objectSpaceNormalTexture = other.objectSpaceNormalTexture;
+		this->original_mesh = other.original_mesh;
+		this->current_mesh = other.current_mesh;
+		this->last_lod_distance = other.last_lod_distance;
+		this->min_lod_distance = other.min_lod_distance;
+		this->lod_distance_step = other.lod_distance_step;
+		this->lod_task = other.lod_task;
+		this->distance_from_camera = other.distance_from_camera;
+		this->buffer = other.buffer;
+		this->shader_material = other.shader_material;
+		this->wireFrameEnabled = other.wireFrameEnabled;
+		uniform_block = new Object3DUniformBlock();
+		RecalculateModelMatrix();
+		uniform_block->SetDrawColor(drawColor);
+		uniform_block->SetUseTrueColor(useTrueColor);
+		uniform_block->SetUseObjectSpaceNormalTexture(useObjectSpaceNormalTexture);
+		uniform_block->SetUseColorTexture(useColorTexture);
 	}
 
 	~Object3D() {
@@ -149,6 +183,16 @@ public:
 		return current_mesh;
 	}
 
+	uint32_t GetVertexCount() {
+		if (current_mesh)
+			return current_mesh->GetVertices().size();
+	}
+
+	uint32_t GetFaceCount() {
+		if (current_mesh)
+			return current_mesh->GetFaceCount();
+	}
+
 	void EnableWireframe() {
 		wireFrameEnabled = true;
 	}
@@ -169,6 +213,36 @@ public:
 	void SetModelMatrix(const mat4& modelMatrix) {
 		this->modelMatrix = modelMatrix;
 		uniform_block->SetModelMatrix(modelMatrix);
+		vec4 new_model_position = vec4(worldPosition, 1.0f) * modelMatrix;
+		vec3 new_world_position = vec3(new_model_position.x, new_model_position.y, new_model_position.z);
+
+		worldPosition = new_world_position;
+	}
+
+	void RecalculateModelMatrix() {
+		mat4 translation     = TranslateMatrix(worldPosition);
+		mat4 rotation_matrix = RotationMatrix(rotationAngle, rotation);
+		mat4 scaling         = ScaleMatrix(scale);
+
+		modelMatrix = scaling * rotation_matrix * translation;
+		uniform_block->SetModelMatrix(modelMatrix);
+		uniform_block->SetModelMatrixInverse(Invert(modelMatrix));
+	}
+
+	void SetWorldPosition(const vec3& position) {
+		worldPosition = position;
+		RecalculateModelMatrix();
+	}
+
+	void SetRotation(const vec3& rotation_vector, float rotation) {
+		this->rotation = rotation_vector;
+		this->rotationAngle = rotation;
+		RecalculateModelMatrix();
+	}
+
+	void SetScale(const vec3& scale) {
+		this->scale = scale;
+		RecalculateModelMatrix();
 	}
 
 	vec3& GetDrawColor() {
@@ -222,15 +296,14 @@ public:
 			current_mesh->Update(length(camera_pos - worldPosition));
 			distance_from_camera = new_distance;
 		}
-	}
-
-	void Draw() {
 
 		if (current_mesh->GetUpdated()) {
 			buffer.Fill(current_mesh);
 			current_mesh->SetUpdated(false);
 		}
+	}
 
+	void Draw() {
 		uniform_block->Bind();
 		shader_material.Activate();
 
@@ -249,12 +322,14 @@ public:
 
 			if (wireFrameEnabled) {
 				uniform_block->SetUseTrueColor(false);
+				uniform_block->SetUseColorTexture(false);
 				uniform_block->SetDrawColor(vec3(0.0, 0.0, 0.0));
 				{
 					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 					glDisable(GL_POLYGON_OFFSET_FILL);
 					this->buffer.Draw();
 				}
+				uniform_block->SetUseColorTexture(useColorTexture);
 				uniform_block->SetUseTrueColor(useTrueColor);
 				uniform_block->SetDrawColor(drawColor);
 			}

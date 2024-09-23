@@ -28,6 +28,33 @@ void Scene::AddObject(Object3D* object) {
 	objects.push_back(object);
 }
 
+void Scene::RemoveObject(Object3D* object) {
+	auto it = std::find(objects.begin(), objects.end(), object);
+	if (it != objects.end()) {
+		objects.erase(it);
+	}
+}
+
+void Scene::ClearAll() {
+	objects.clear();
+}
+
+uint32_t Scene::GetVertexCount() {
+	uint32_t count = 0;
+	for (auto obj : objects) {
+		count += obj->GetVertexCount();
+	}
+	return count;
+}
+
+uint32_t Scene::GetFaceCount() {
+	uint32_t count = 0;
+	for (auto obj : objects) {
+		count += obj->GetFaceCount();
+	}
+	return count;
+}
+
 void Scene::SetFreezeViewMatrix(bool freeze) {
 	if (camera) {
 		camera->SetFreezeViewMatrix(freeze);
@@ -61,5 +88,11 @@ void Scene::OrbitCamera(float rad, const vec2& axis) {
 void Scene::MoveCamera(float amount, const vec2& dir) {
 	if (camera) {
 		camera->Move(amount, dir);
+	}
+}
+
+void Scene::SetCameraPosition(const vec3& pos) {
+	if (camera) {
+		camera->SetWorldPosition(pos);
 	}
 }
