@@ -70,14 +70,10 @@ public:
 		this->colorTexture = other.colorTexture;
 		this->useObjectSpaceNormalTexture = other.useObjectSpaceNormalTexture;
 		this->objectSpaceNormalTexture = other.objectSpaceNormalTexture;
-		this->original_mesh = other.original_mesh;
-		this->current_mesh = other.current_mesh;
 		this->last_lod_distance = other.last_lod_distance;
 		this->min_lod_distance = other.min_lod_distance;
 		this->lod_distance_step = other.lod_distance_step;
-		this->lod_task = other.lod_task;
 		this->distance_from_camera = other.distance_from_camera;
-		this->buffer = other.buffer;
 		this->shader_material = other.shader_material;
 		this->wireFrameEnabled = other.wireFrameEnabled;
 		uniform_block = new Object3DUniformBlock();
@@ -86,6 +82,7 @@ public:
 		uniform_block->SetUseTrueColor(useTrueColor);
 		uniform_block->SetUseObjectSpaceNormalTexture(useObjectSpaceNormalTexture);
 		uniform_block->SetUseColorTexture(useColorTexture);
+		SetOriginalMesh(other.current_mesh);
 	}
 
 	~Object3D() {
@@ -224,7 +221,7 @@ public:
 		mat4 rotation_matrix = RotationMatrix(rotationAngle, rotation);
 		mat4 scaling         = ScaleMatrix(scale);
 
-		modelMatrix = scaling * rotation_matrix * translation;
+		modelMatrix = translation * rotation_matrix * scaling;
 		uniform_block->SetModelMatrix(modelMatrix);
 		uniform_block->SetModelMatrixInverse(Invert(modelMatrix));
 	}

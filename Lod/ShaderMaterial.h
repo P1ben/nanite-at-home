@@ -10,6 +10,10 @@ public:
 		shader = nullptr;
 	}
 
+	ShaderMaterial(const ShaderMaterial& other) {
+		shader = other.shader;
+	}
+
 	void SetShader(Shader* shader) {
 		if (shader) {
 			this->shader = shader;

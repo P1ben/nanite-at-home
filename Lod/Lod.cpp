@@ -433,11 +433,11 @@ void Initialization() {
     //Vase
     nanite_obj->SetScale(vec3(0.002, 0.002, 0.002));
     nanite_obj->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
-    nanite_obj->SetWorldPosition(vec3(1, 0, 0));
+    nanite_obj->SetWorldPosition(vec3(0, 0, 0));
 
     reference_obj->SetScale(vec3(0.002, 0.002, 0.002));
     reference_obj->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
-    reference_obj->SetWorldPosition(vec3(1, 0, 0));
+    reference_obj->SetWorldPosition(vec3(0, 0, 0));
 
     //nanite_obj->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
     //reference_obj->SetModelMatrix(ScaleMatrix(vec3(0.002, 0.002, 0.002)) * RotationMatrix(M_PI / 2.0f, vec3(1.f, .0f, .0f)));
@@ -449,16 +449,16 @@ void Initialization() {
 
     scene = new Scene();
     //scene->SetCamera(vec3(0, 0, -1), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
-    scene->SetCamera(vec3(-3.190557, 6.917207, -9.062605), vec3(-0.379691, 4.304642, 0.749835), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
+    scene->SetCamera(vec3(-3.190557, 6.917207, -9.062605), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1, 100);
     scene->AddObject(nanite_obj);
 
-    nanite_obj2 = new Object3D();
-    nanite_obj2->SetOriginalMesh(nanite_obj->GetMesh());
-    nanite_obj2->SetShader(maxblinn_shader);
-    nanite_obj2->SetDrawColor(vec3(1.0f, 0.0f, 0));
-    nanite_obj2->AttachColorMap(new ColorMap(reference_texture, true));
-    nanite_obj2->SetScale(vec3(0.002, 0.002, 0.002));
-    nanite_obj2->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
+    nanite_obj2 = new Object3D(*nanite_obj);
+    //nanite_obj2->SetOriginalMesh(nanite_obj->GetMesh());
+    //nanite_obj2->SetShader(maxblinn_shader);
+    //nanite_obj2->SetDrawColor(vec3(1.0f, 0.0f, 0));
+    //nanite_obj2->AttachColorMap(new ColorMap(reference_texture, true));
+    //nanite_obj2->SetScale(vec3(0.002, 0.002, 0.002));
+    //nanite_obj2->SetRotation(vec3(1.f, .0f, .0f), -M_PI / 2.f);
     nanite_obj2->SetWorldPosition(vec3(-1, 0, 0));
     scene->AddObject(nanite_obj2);
     
@@ -493,9 +493,9 @@ void Initialization() {
     //triangle->DisableMVPUpdate();
     
     // Init sampling distances for benchmarking
-    float start_dist = 2.0f;
+    float start_dist = 1.0f;
     float end_dist   = 20.0f;
-    float step       = 5.f;
+    float step       = 0.5f;
 
     for (float i = start_dist; i <= end_dist; i += step) {
 		distances.push_back(i);
@@ -624,7 +624,7 @@ int main(int argc, char* argv[])
         ImGui::Text("Current algorithm:\n");
         ImGui::Text(current_algo == ALG_QEF ? "QEF" : "Simple Average");
         ImGui::Text("Number of faces:\n");
-        ImGui::Text("%d", reference_obj->GetMesh()->GetFaceCount());
+        ImGui::Text("%d", scene->GetFaceCount());
         if (ImGui::Button("Switch method")) {
             if (current_algo == ALG_SIMPLE_AVG) {
                 current_algo = ALG_QEF;
@@ -716,7 +716,11 @@ int main(int argc, char* argv[])
         ImGui::Text("Last Frame Time (ms):");
         ImGui::Text(std::to_string(fps_counter.GetLastFrametime()).c_str());
         if (ImGui::Button("Start Stationary FPS Benchmark")) {
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 5);
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1);
+        }
+
+        if (ImGui::Button("Start Moving FPS Benchmark")) {
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances.front(), distances.back(), 20, 1);
         }
 
         if (ImGui::Button("Start Image Difference Benchmark")) {
@@ -725,7 +729,7 @@ int main(int argc, char* argv[])
 
         if (ImGui::Button("Start Combined Benchmark")) {
             std::string date_str = Timer::GetCurrentTimeStr();
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 5, date_str.c_str());
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1, date_str.c_str());
             Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, date_str.c_str());
         }
 

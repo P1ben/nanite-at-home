@@ -27,6 +27,7 @@ public:
 									   float              sample_time,
 									   std::vector<float> distances,
 									   int                copy_count,
+									   int                copy_dist,
 									   const char*        custom_folder = nullptr)
 	{
 		std::vector<float> nanite_fps;
@@ -45,7 +46,12 @@ public:
 		std::vector<Object3D*> nanite_objs;
 		for (int i = 0; i < copy_count; i++) {
 			nanite_objs.push_back(new Object3D(*nanite_obj));
-			nanite_objs.back()->SetWorldPosition(vec3(-1.f * i, .0f, .0f));
+			if (i % 2 == 0) {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f,  1.f)) * i * copy_dist);
+			}
+			else {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
 			test_scene.AddObject(nanite_objs.back());
 		}
 
@@ -85,7 +91,12 @@ public:
 		std::vector<Object3D*> reference_objs;
 		for (int i = 0; i < copy_count; i++) {
 			reference_objs.push_back(new Object3D(*original_obj));
-			reference_objs.back()->SetWorldPosition(vec3(-1.f * i, .0f, .0f));
+			if (i % 2 == 0) {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f,  1.f)) * i * copy_dist);
+			}
+			else {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
 			test_scene.AddObject(reference_objs.back());
 		}
 
@@ -151,6 +162,161 @@ public:
 							 std::to_string(nanite_mesh_vertex_count[i]),
 							 std::to_string(original_mesh_vertex_count[i]),
 						  });
+		}
+
+		CSVWriter::WriteCSV(save_path, data);
+	}
+
+	static void MovingFPSBenchmark(SDL_Window*		  window,
+								   Object3D*		  nanite_obj,
+								   Object3D*		  original_obj,
+								   float              animation_time,
+								   float              start_dist,
+								   float              end_dist,
+								   int                copy_count,
+								   int                copy_dist,
+								   const char*        custom_folder = nullptr)
+	{
+		std::vector<float> nanite_fps;
+		std::vector<float> original_fps;
+
+		std::cout << "Starting Stationary FPS Benchmark" << std::endl;
+
+		Scene test_scene;
+		test_scene.SetCamera(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)1280 / (float)720, 0.1, 100);
+
+		std::vector<Object3D*> nanite_objs;
+		for (int i = 0; i < copy_count; i++) {
+			nanite_objs.push_back(new Object3D(*nanite_obj));
+			if (i % 2 == 0) {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, 1.f)) * i * copy_dist);
+			}
+			else {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
+			test_scene.AddObject(nanite_objs.back());
+		}
+
+		float camera_move_delta = (end_dist - start_dist) / animation_time;
+
+		Timer timer;
+		FPSCounter fps_counter;
+
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		std::cout << "Starting Nanite benchmark" << std::endl;
+		float current_camera_x = start_dist;
+		test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
+		test_scene.Update();
+
+		// init draw call so the buffer gets filled
+		test_scene.Draw();
+		fps_counter.Start();
+		timer.Start(animation_time);
+		timer.SavePoint();
+		while (!timer.IsFinished()) {
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			test_scene.Draw();
+			SDL_GL_SwapWindow(window);
+			fps_counter.Update();
+			current_camera_x = current_camera_x + camera_move_delta * timer.GetSecondsElapsed();
+			timer.SavePoint();
+			//printf("%f\n", current_camera_x);
+			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
+			test_scene.Update();
+		}
+		nanite_fps.push_back(fps_counter.GetFPSAvg());
+		//Mesh* nanite_mesh = nanite_obj->GetMesh();
+		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
+		//std::cout << "\tNanite FPS at distance " << dist << " is " << nanite_fps.back() << std::endl;
+		fps_counter.Reset();
+
+		test_scene.ClearAll();
+
+		for (auto* obj : nanite_objs) {
+			delete obj;
+		}
+
+		std::vector<Object3D*> reference_objs;
+		for (int i = 0; i < copy_count; i++) {
+			reference_objs.push_back(new Object3D(*original_obj));
+			if (i % 2 == 0) {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, 1.f)) * i * copy_dist);
+			}
+			else {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
+			test_scene.AddObject(reference_objs.back());
+		}
+
+		fps_counter.Reset();
+
+		std::cout << "Starting Reference benchmark" << std::endl;
+		current_camera_x = start_dist;
+		test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
+		test_scene.Update();
+
+		// init draw call so the buffer gets filled
+		test_scene.Draw();
+		fps_counter.Start();
+		timer.Start(animation_time);
+		timer.SavePoint();
+		while (!timer.IsFinished()) {
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			test_scene.Draw();
+			SDL_GL_SwapWindow(window);
+			fps_counter.Update();
+			current_camera_x = current_camera_x + camera_move_delta * timer.GetSecondsElapsed();
+			timer.SavePoint();
+			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
+			test_scene.Update();
+		}
+		original_fps.push_back(fps_counter.GetFPSAvg());
+		//Mesh* nanite_mesh = nanite_obj->GetMesh();
+		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
+		//std::cout << "\tNanite FPS at distance " << dist << " is " << nanite_fps.back() << std::endl;
+		fps_counter.Reset();
+
+		for (auto* obj : reference_objs) {
+			delete obj;
+		}
+
+		std::string date_str;
+
+		if (custom_folder) {
+			date_str = custom_folder;
+		}
+		else {
+			date_str = Timer::GetCurrentTimeStr();
+		}
+
+		std::string filename = "StationaryFPSBenchmark_" + date_str + ".csv";
+		std::string folder = BENCHMARK_SAVE_PATH + date_str;
+
+		CreateFolder(folder.c_str());
+
+		std::string save_path = folder + "\\" + filename;
+
+		std::vector<std::vector<std::string>> data;
+		data.push_back({ "",
+						 "Nanite FPS",
+						 "Reference FPS",
+						 //"Nanite Triangle Count",
+						 //"Reference Triangle Count",
+						 //"Nanite Vertex Count",
+						 //"Reference Vertex Count",
+			});
+
+		for (int i = 0; i < 1; i++) {
+			data.push_back({ "Averages",
+							 std::to_string(nanite_fps[i]),
+							 std::to_string(original_fps[i]),
+							 //std::to_string(nanite_mesh_triangle_count[i]),
+							 //std::to_string(original_mesh_triangle_count[i]),
+							 //std::to_string(nanite_mesh_vertex_count[i]),
+							 //std::to_string(original_mesh_vertex_count[i]),
+				});
 		}
 
 		CSVWriter::WriteCSV(save_path, data);

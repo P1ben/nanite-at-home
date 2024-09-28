@@ -39,7 +39,6 @@ public:
 	}
 
 	void Fill(const std::vector<Vertex>& vertices, const std::vector<Face>& faces) {
-
 		std::vector<unsigned> faces_list;
 		faces_list.reserve(faces.size());
 		for (const Face& f : faces) {
@@ -47,11 +46,14 @@ public:
 			faces_list.push_back(f.b);
 			faces_list.push_back(f.c);
 		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces_list.size() * sizeof(unsigned), faces_list.data(), GL_STATIC_DRAW);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 		number_of_faces = faces.size();
-		printf("Buffer loaded, vertices: %d | faces: %d\n", vertices.size(), faces.size());
+		//printf("Buffer loaded, vertices: %d | faces: %d\n", vertices.size(), faces.size());
 	}
 
 	void Fill(const RowMatrixf& V, const RowMatrixf& N, const RowMatrixu& F) {
@@ -64,6 +66,9 @@ public:
 			bufferData.push_back(N(i));*/
 		}
 
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, F.size() * sizeof(unsigned), F.data(), GL_STATIC_DRAW);
 		glBufferData(GL_ARRAY_BUFFER, (V.size() + N.size()) * sizeof(float), bufferData.data(), GL_STATIC_DRAW);
 		number_of_faces = F.rows();
@@ -71,11 +76,15 @@ public:
 
 	void Fill(Mesh* mesh) {
 		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		this->Fill(mesh->GetVertices(), mesh->GetFaces());
 	}
 
 	void Draw() {
 		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		glDrawElements(GL_TRIANGLES, number_of_faces * 3, GL_UNSIGNED_INT, 0);
 	}
 
