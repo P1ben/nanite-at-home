@@ -172,7 +172,7 @@ public:
 
 		for (const Face& face : faces) {
 			OMesh::FaceHandle fh = mesh.add_face(vhandles[face.a], vhandles[face.b], vhandles[face.c]);
-			mesh.set_normal(fh, MeshTraits::Normal(face.normal.x, face.normal.y, face.normal.z));
+			//mesh.set_normal(fh, MeshTraits::Normal(face.normal.x, face.normal.y, face.normal.z));
 		}
 
 		//for (const Face& face : faces) {

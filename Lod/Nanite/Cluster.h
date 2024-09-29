@@ -109,7 +109,7 @@ public:
 		error += StaticDecimator::DecimateClusterUntil(inner_mesh, 256);
 	}
 
-	const virtual std::vector<Vertex> GetVertices() {
+	const virtual std::vector<Vertex>& GetVertices() {
 		//std::vector<Vertex> retval;
 
 		//for (OMesh::VertexIter v_it(inner_mesh.vertices_begin()); v_it != inner_mesh.vertices_end(); ++v_it) {
@@ -133,7 +133,7 @@ public:
 		return inner_static_mesh.GetVertices();
 	}
 
-	bool ShouldShow(float metric, Cluster& parent) {
+	bool ShouldShow(float metric) {
 		//if (marked)
 		//	return true;
 		//else

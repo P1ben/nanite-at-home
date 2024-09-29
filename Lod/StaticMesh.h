@@ -131,7 +131,8 @@ public:
 		}
 
 		for (int i = 0; i < F.rows(); i++) {
-			faces.push_back(Face(F(i, 0), F(i, 1), F(i, 2), VecLib::CalculateFaceNormal(vertices[F(i, 0)].position, vertices[F(i, 1)].position, vertices[F(i, 2)].position)));
+			//faces.push_back(Face(F(i, 0), F(i, 1), F(i, 2), VecLib::CalculateFaceNormal(vertices[F(i, 0)].position, vertices[F(i, 1)].position, vertices[F(i, 2)].position)));
+			faces.push_back(Face(F(i, 0), F(i, 1), F(i, 2)));
 		}
 
 		//for (const auto& vert : vertices) {

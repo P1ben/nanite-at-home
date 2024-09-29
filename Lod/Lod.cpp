@@ -138,7 +138,7 @@ Object3D* nanite_obj2   = nullptr;
 Object3D* reference_obj = nullptr;
 Shader* maxblinn_shader = nullptr;
 Scene* scene = nullptr;
-Octree* tree = nullptr;
+//Octree* tree = nullptr;
 
 bool mmb_pressed = false;
 bool shift_pressed = false;
@@ -511,7 +511,7 @@ vec3 old_color = current_color;
 Mesh* current_mesh = nullptr;
 
 bool algo_changed = false;
-Algorithm current_algo = ALG_SIMPLE_AVG;
+//Algorithm current_algo = ALG_SIMPLE_AVG;
 
 int  frames_elapsed = 0;
 bool animation_started = false;
@@ -622,10 +622,10 @@ int main(int argc, char* argv[])
         //ImGui::Text("Hello from another window!");
         ImGui::SliderInt("Lod", &current_simplificaton_rate, 0, lod_meshes.size() - 1);
         ImGui::Text("Current algorithm:\n");
-        ImGui::Text(current_algo == ALG_QEF ? "QEF" : "Simple Average");
+        //ImGui::Text(current_algo == ALG_QEF ? "QEF" : "Simple Average");
         ImGui::Text("Number of faces:\n");
         ImGui::Text("%d", scene->GetFaceCount());
-        if (ImGui::Button("Switch method")) {
+        /*if (ImGui::Button("Switch method")) {
             if (current_algo == ALG_SIMPLE_AVG) {
                 current_algo = ALG_QEF;
             }
@@ -633,7 +633,7 @@ int main(int argc, char* argv[])
                 current_algo = ALG_SIMPLE_AVG;
             }
             algo_changed = true;
-        }
+        }*/
         ImGui::End();
 
         ImGui::Begin("Mesh settings");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
@@ -716,7 +716,7 @@ int main(int argc, char* argv[])
         ImGui::Text("Last Frame Time (ms):");
         ImGui::Text(std::to_string(fps_counter.GetLastFrametime()).c_str());
         if (ImGui::Button("Start Stationary FPS Benchmark")) {
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1);
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 1, distances, 20, 1);
         }
 
         if (ImGui::Button("Start Moving FPS Benchmark")) {

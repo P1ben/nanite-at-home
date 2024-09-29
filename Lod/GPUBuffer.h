@@ -39,18 +39,18 @@ public:
 	}
 
 	void Fill(const std::vector<Vertex>& vertices, const std::vector<Face>& faces) {
-		std::vector<unsigned> faces_list;
-		faces_list.reserve(faces.size());
-		for (const Face& f : faces) {
-			faces_list.push_back(f.a);
-			faces_list.push_back(f.b);
-			faces_list.push_back(f.c);
-		}
+		//std::vector<unsigned> faces_list;
+		//faces_list.reserve(faces.size());
+		//for (const Face& f : faces) {
+		//	faces_list.push_back(f.a);
+		//	faces_list.push_back(f.b);
+		//	faces_list.push_back(f.c);
+		//}
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces_list.size() * sizeof(unsigned), faces_list.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(uint32_t) * 3, faces.data(), GL_STATIC_DRAW);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 		number_of_faces = faces.size();
 		//printf("Buffer loaded, vertices: %d | faces: %d\n", vertices.size(), faces.size());

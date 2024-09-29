@@ -9,17 +9,17 @@ public:
 	VERTEX_ID a;
 	VERTEX_ID b;
 	VERTEX_ID c;
-	vec3 normal;
-	bool deleted = false;
+	//vec3 normal;
+	//bool deleted = false;
 
 //public:
 	Face() : a(0), b(0), c(0){}
 	Face(uint32_t _a, uint32_t _b, uint32_t _c) : a(_a), b(_b), c(_c) {}
-	Face(uint32_t _a, uint32_t _b, uint32_t _c, vec3 _normal) : a(_a), b(_b), c(_c), normal(_normal) {}
+	//Face(uint32_t _a, uint32_t _b, uint32_t _c, vec3 _normal) : a(_a), b(_b), c(_c), normal(_normal) {}
 
-	void RecalculateNormal(std::vector<Vertex>& vertices) {
-		this->normal = VecLib::CalculateFaceNormal(vertices[a].position, vertices[b].position, vertices[c].position);
-	}
+	//void RecalculateNormal(std::vector<Vertex>& vertices) {
+	//	this->normal = VecLib::CalculateFaceNormal(vertices[a].position, vertices[b].position, vertices[c].position);
+	//}
 
 	bool ContainsId(uint32_t index) {
 		if (a == index || b == index || c == index) return true;

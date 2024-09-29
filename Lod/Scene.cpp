@@ -10,6 +10,24 @@ void Scene::Update()
 	}
 }
 
+//void Scene::UpdateAsync()
+//{
+//	if (camera) {
+//		const vec3& camera_pos = camera->GetWorldPosition();
+//		thread_pool.Start();
+//		for (auto obj : objects) {
+//			thread_pool.QueueJob([&](void* _) {
+//				obj->UpdateMeshNoRefill(camera_pos);
+//			});
+//		}
+//
+//		thread_pool.Join();
+//		for (auto obj : objects) {
+//			obj->RefillBufferIfNeeded();
+//		}
+//	}
+//}
+
 Scene::Scene() {}
 
 Scene::~Scene() {

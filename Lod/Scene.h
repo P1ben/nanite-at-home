@@ -3,12 +3,13 @@
 #include "Quaternion.h"
 #include "Camera.h"
 #include "Object3D.h"
+//#include "ThreadPool/ThreadPool.h"
 
 class Scene {
 private:
-	Camera* camera = nullptr;
+	Camera*                camera = nullptr;
 	std::vector<Object3D*> objects;
-
+	//ThreadPool             thread_pool;
 
 public:
 	Scene();
@@ -23,6 +24,7 @@ public:
 	void SetFreezeViewMatrix(bool freeze);
 
 	void Update();
+	//void UpdateAsync();
 	void Draw();
 
 	void ZoomCamera(float amount);

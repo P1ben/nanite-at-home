@@ -300,6 +300,23 @@ public:
 		}
 	}
 
+	// Only used when performing async loading
+	void UpdateMeshNoRefill(const vec3& camera_pos) {
+		float new_distance = length(camera_pos - worldPosition);
+		if (current_mesh && new_distance != distance_from_camera) {
+			current_mesh->Update(length(camera_pos - worldPosition));
+			distance_from_camera = new_distance;
+		}
+	}
+
+	// Only used when performing async loading
+	void RefillBufferIfNeeded() {
+		if (current_mesh->GetUpdated()) {
+			buffer.Fill(current_mesh);
+			current_mesh->SetUpdated(false);
+		}
+	}
+
 	void Draw() {
 		uniform_block->Bind();
 		shader_material.Activate();

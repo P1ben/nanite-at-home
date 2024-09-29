@@ -48,17 +48,17 @@ class NaniteMesh : public Mesh {
 				return nullptr;
 			}
 
-			void FillFaceVertRecursive(float cut_metric, Cluster& parent, std::vector<Cluster>& clusters, std::vector<Face>& faces, std::vector<Vertex>& verts) {
-				if (clusters[cluster_id].ShouldShow(cut_metric, parent)) {
+			void FillFaceVertRecursive(float cut_metric, std::vector<Cluster>& clusters, std::vector<Face>& faces, std::vector<Vertex>& verts) {
+				if (clusters[cluster_id].ShouldShow(cut_metric)) {
 					std::vector<Face> clstr_fc = clusters[cluster_id].GetFacesWithOffset(verts.size());
 					faces.insert(faces.end(), clstr_fc.begin(), clstr_fc.end());
 
-					std::vector<Vertex> clstr_vtx = clusters[cluster_id].GetVertices();
+					const std::vector<Vertex>& clstr_vtx = clusters[cluster_id].GetVertices();
 					verts.insert(verts.end(), clstr_vtx.begin(), clstr_vtx.end());
 				}
 				else {
 					for (auto& chld : children) {
-						chld.FillFaceVertRecursive(cut_metric, clusters[cluster_id], clusters, faces, verts);
+						chld.FillFaceVertRecursive(cut_metric, clusters, faces, verts);
 					}
 				}
 			}
@@ -115,7 +115,7 @@ class NaniteMesh : public Mesh {
 			verts.clear();
 
 			for (auto& root : root_nodes) {
-				root.FillFaceVertRecursive(cut_metric, clusters[root.cluster_id], clusters, faces, verts);
+				root.FillFaceVertRecursive(cut_metric, clusters, faces, verts);
 			}
 		}
 
