@@ -8,7 +8,7 @@ struct Cluster {
     uint faces_length;
 };
 
-layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout (std430, binding = 11) readonly buffer input_clusters {
     Cluster i_clusters[];

@@ -29,7 +29,7 @@ void NaniteRenderer::FillBuffer(ClusterBuffer* i_cluster, FaceBuffer* i_faces, F
 	outputFaceCountBuffer->Bind();
 
 	counterShader->Use();
-	counterShader->Dispatch(i_cluster->GetClusterCount() / 64, 1, 1);
+	counterShader->Dispatch(i_cluster->GetClusterCount(), 1, 1);
 
 	uint32_t expected_face_count = outputFaceCountBuffer->GetFaceCount();
 
@@ -39,7 +39,7 @@ void NaniteRenderer::FillBuffer(ClusterBuffer* i_cluster, FaceBuffer* i_faces, F
 	o_faces->Bind();
 
 	computeShader->Use();
-	computeShader->Dispatch(i_cluster->GetClusterCount() / 64, 1, 1);
+	computeShader->Dispatch(i_cluster->GetClusterCount(), 1, 1);
 
 	//GLenum error;
 	//while ((error = glGetError()) != GL_NO_ERROR) {
