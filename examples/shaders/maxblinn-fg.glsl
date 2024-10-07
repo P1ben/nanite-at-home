@@ -5,14 +5,15 @@ in vec3 vertexColor;
 in vec4 modelPosition;
 in vec4 worldPosition;
 in vec4 worldNormal;
+in vec2 textureCoords;
 
-layout (std140, binding = 1) uniform Camera {
+layout (std140, binding = 2) uniform Camera {
     mat4 viewMatrix;
     mat4 projMatrix;
     vec3 cameraPosition;
 };
 
-layout (std140, binding = 2) uniform Object {
+layout (std140, binding = 3) uniform Object {
     mat4 modelMatrix;
     mat4 modelMatrixInverse;
     vec3 drawColor;
@@ -50,10 +51,19 @@ vec3 shade_phong_blinn(vec3 normal, vec3 lightDir, vec3 viewDir,
 }
 
 void main() {
-    //Light pointLight = { vec4(cameraPosition, 1.0), vec3(1.0, 1.0, 1.0) };
-    Light pointLight = Light(vec4(-3.190557, 6.917207, -9.062605, 1.0), vec3(1.0, 1.0, 1.0));
+    Light pointLight = { vec4(cameraPosition, 1.0), vec3(1.0, 1.0, 1.0) };
+    //Light pointLight = Light(vec4(-3.190557, 6.917207, -9.062605, 1.0), vec3(1.0, 1.0, 1.0));
 
-    vec3 color = useTrueColor ? vertexColor : drawColor;
+    vec3 color = drawColor;
+    
+    if (useColorTexture) {
+        color = texture(colorTexture, textureCoords).xyz;
+    }
+
+    if (useTrueColor) {
+        color = vertexColor;
+    }
+
     vec3 normal = normalize(worldNormal.xyz);
     vec3 wP = worldPosition.xyz / worldPosition.w;
 

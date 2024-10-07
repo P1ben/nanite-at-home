@@ -3,23 +3,30 @@
 #include "framework.h"
 #include "Face.h"
 #include "Mesh.h"
+#include "Compute/FaceBuffer.h"
+#include "Compute/VertexBuffer.h"
 
 class GPUBuffer {
 private:
 	uint32_t vao;
-	uint32_t vbo;
-	uint32_t ebo;
+	//uint32_t vbo;
+	// uint32_t ebo;
+	FaceBuffer* faceBuffer = nullptr;
+	VertexBuffer* vertexBuffer = nullptr;
 
-	uint32_t number_of_faces;
+	//uint32_t number_of_faces;
 
 public:
 	GPUBuffer() {
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
-		glGenBuffers(1, &vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glGenBuffers(1, &ebo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		//glGenBuffers(1, &vbo);
+		vertexBuffer = new VertexBuffer();
+
+
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->GetId());
+		/*glGenBuffers(1, &ebo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);*/
 		// Position
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
@@ -35,7 +42,9 @@ public:
 		// UV
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(vec3)));
 		glEnableVertexAttribArray(3);
-		number_of_faces = 0;
+		//number_of_faces = 0;
+		faceBuffer = new FaceBuffer(0);
+		//glVertexArrayElementBuffer(vao, faceBuffer->GetId());
 	}
 
 	void Fill(const std::vector<Vertex>& vertices, const std::vector<Face>& faces) {
@@ -47,15 +56,33 @@ public:
 		//	faces_list.push_back(f.c);
 		//}
 
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		//glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		//glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+		vertexBuffer->ManualFill(vertices);
+		faceBuffer->ManualFill(faces);
+		/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(uint32_t) * 3, faces.data(), GL_STATIC_DRAW);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-		number_of_faces = faces.size();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(uint32_t) * 3, faces.data(), GL_STATIC_DRAW);*/
+		//number_of_faces = faces.size();
 		//printf("Buffer loaded, vertices: %d | faces: %d\n", vertices.size(), faces.size());
 	}
 
+	void FillFaces(const std::vector<Face>& faces) {
+		//glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		faceBuffer->ManualFill(faces);
+		faceBuffer->Bind();
+		//faceBuffer->Inspect();
+		//GLuint ssboSize;
+		//glGetBufferParameteriv(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, (GLint*)&ssboSize);
+		//std::cout << "SSBO Size: " << ssboSize << std::endl;
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(uint32_t) * 3, faces.data(), GL_STATIC_DRAW);
+		//number_of_faces = faces.size();
+		//printf("Buffer loaded, faces: %d\n", faces.size());
+	}
+
+	// Do not use, broken
 	void Fill(const RowMatrixf& V, const RowMatrixf& N, const RowMatrixu& F) {
 		std::vector<vec3> bufferData;
 		int rows = V.rows();
@@ -66,31 +93,56 @@ public:
 			bufferData.push_back(N(i));*/
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		//glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, F.size() * sizeof(unsigned), F.data(), GL_STATIC_DRAW);
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, F.size() * sizeof(unsigned), F.data(), GL_STATIC_DRAW);
 		glBufferData(GL_ARRAY_BUFFER, (V.size() + N.size()) * sizeof(float), bufferData.data(), GL_STATIC_DRAW);
-		number_of_faces = F.rows();
+		//number_of_faces = F.rows();
 	}
 
 	void Fill(Mesh* mesh) {
 		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 		this->Fill(mesh->GetVertices(), mesh->GetFaces());
+	}
+
+	void FillFacesOnly(Mesh* mesh) {
+		glBindVertexArray(vao);
+		this->FillFaces(mesh->GetFaces());
+	}
+
+	FaceBuffer* GetFaceBuffer() {
+		return faceBuffer;
+	}
+
+	uint32_t GetFaceCount() {
+		return faceBuffer->GetFaceCount();
+	}
+
+	uint32_t GetVertexCount() {
+		return vertexBuffer->GetVertexCount();
 	}
 
 	void Draw() {
 		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-		glDrawElements(GL_TRIANGLES, number_of_faces * 3, GL_UNSIGNED_INT, 0);
+		/*glBindBuffer(GL_ARRAY_BUFFER, vbo); */
+		vertexBuffer->BindAsVertexBuffer();
+		faceBuffer->BindAsIndexBuffer();
+		//faceBuffer->Inspect();
+		//faceBuffer->PrintData();
+		//glDrawArrays(GL_TRIANGLES, 0, faceBuffer->GetFaceCount() * 3);
+		glDrawElements(GL_TRIANGLES, faceBuffer->GetFaceCount() * 3, GL_UNSIGNED_INT, nullptr);
+		//GLenum error;
+		//while ((error = glGetError()) != GL_NO_ERROR) {
+		//	std::cerr << "OpenGL Error: " << error << std::endl;
+		//}
 	}
 
 	~GPUBuffer() {
-		glDeleteBuffers(1, &vbo);
-		glDeleteBuffers(1, &ebo);
+		//glDeleteBuffers(1, &vbo);
+		//glDeleteBuffers(1, &ebo);
 		glDeleteVertexArrays(1, &vao);
+		delete faceBuffer;
+		delete vertexBuffer;
 	}
 };

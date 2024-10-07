@@ -119,13 +119,9 @@ public:
 
 		NaniteMesh* nanite_mesh = nullptr;
 
-		PRINT_TIME_TAKEN("Loading Nanite Mesh:", {
-			nanite_mesh = new NaniteMesh(folder_path);
-		})
+		nanite_mesh = new NaniteMesh(folder_path);
 
-		PRINT_TIME_TAKEN("Setting Step Boundaries:", {
-			nanite_mesh->SetChangeStepForClusters(10.2312423f);
-		})
+		nanite_mesh->SetChangeStepForClusters(10.2312423f);
 
 		object->SetOriginalMesh(nanite_mesh);
 		return object;
@@ -181,13 +177,11 @@ public:
 	}
 
 	uint32_t GetVertexCount() {
-		if (current_mesh)
-			return current_mesh->GetVertices().size();
+		return buffer.GetVertexCount();
 	}
 
 	uint32_t GetFaceCount() {
-		if (current_mesh)
-			return current_mesh->GetFaceCount();
+		return buffer.GetFaceCount();
 	}
 
 	void EnableWireframe() {
@@ -290,13 +284,19 @@ public:
 	void UpdateMesh(const vec3& camera_pos) {
 		float new_distance = length(camera_pos - worldPosition);
 		if (current_mesh && new_distance != distance_from_camera) {
-			current_mesh->Update(length(camera_pos - worldPosition));
+			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer());
 			distance_from_camera = new_distance;
 		}
 
-		if (current_mesh->GetUpdated()) {
+		auto upd = current_mesh->GetUpdated();
+
+		if (upd == VERTEX_FACE_UPDATE) {
 			buffer.Fill(current_mesh);
-			current_mesh->SetUpdated(false);
+			current_mesh->SetUpdated(NO_UPDATE);
+		}
+		else if (upd == FACE_UPDATE) {
+			buffer.FillFacesOnly(current_mesh);
+			current_mesh->SetUpdated(NO_UPDATE);
 		}
 	}
 
@@ -304,16 +304,22 @@ public:
 	void UpdateMeshNoRefill(const vec3& camera_pos) {
 		float new_distance = length(camera_pos - worldPosition);
 		if (current_mesh && new_distance != distance_from_camera) {
-			current_mesh->Update(length(camera_pos - worldPosition));
+			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer());
 			distance_from_camera = new_distance;
 		}
 	}
 
 	// Only used when performing async loading
 	void RefillBufferIfNeeded() {
-		if (current_mesh->GetUpdated()) {
+		auto upd = current_mesh->GetUpdated();
+
+		if (upd == VERTEX_FACE_UPDATE) {
 			buffer.Fill(current_mesh);
-			current_mesh->SetUpdated(false);
+			current_mesh->SetUpdated(NO_UPDATE);
+		}
+		else if (upd == FACE_UPDATE) {
+			buffer.FillFacesOnly(current_mesh);
+			current_mesh->SetUpdated(NO_UPDATE);
 		}
 	}
 

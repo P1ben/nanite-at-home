@@ -6,26 +6,34 @@
 #include <igl/list_to_matrix.h>
 #include <igl/per_vertex_normals.h>
 #include "Vertex.h"
+#include "Compute/FaceBuffer.h"
+
+enum UpdateType {
+	VERTEX_FACE_UPDATE,
+	FACE_UPDATE,
+	NO_UPDATE,
+};
 
 class Mesh {
 private:
-	bool updated = false;
+	UpdateType updated = NO_UPDATE;
 public:
+
 	const virtual std::vector<Vertex>& GetVertices() = 0;
 
 	const virtual std::vector<Face>& GetFaces() = 0;
 
 	virtual int GetFaceCount() = 0;
 
-	bool GetUpdated() {
+	UpdateType GetUpdated() {
 		return updated;
 	}
 
-	void SetUpdated(bool _upd) {
+	void SetUpdated(UpdateType _upd) {
 		updated = _upd;
 	}
 
-	virtual void Update(float center_distance_from_camera) = 0;
+	virtual void Update(float center_distance_from_camera, FaceBuffer* o_faces) = 0;
 
 	~Mesh() {
 	}

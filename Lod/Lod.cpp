@@ -29,6 +29,7 @@
 #include "Metrics/FPSCounter.h"
 #include "Metrics/ImageErrorCalculator.h"
 #include "Benchmark/Benchmark.h"
+#include "Compute/NaniteRenderer.h"
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
@@ -74,7 +75,7 @@ void init_window(SDL_Window** window, SDL_GLContext* context) {
      * but it should default to the core profile */
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     /* Turn on double buffering with a 24bit Z buffer.
@@ -385,6 +386,8 @@ void Initialization() {
     //    })
     //})
 
+    //NaniteRenderer::GetInstance()->Test();
+    //printf("A");
 
     //PRINT_TIME_TAKEN("Building edge collection", {
     //    EdgeCollection collection = EdgeCollection(facesa);
@@ -398,6 +401,13 @@ void Initialization() {
     //    printf("\tCommon point: %u\n", collection.FindCommonPoint(0U, 71384U, 71385U));
     //    })
     //})
+
+    //PRINT_TIME_TAKEN("Zipping vase mesh", {
+    //    ObjReader::ZipNaniteMesh("vase_nanite");
+    //})
+
+    //Decimator2::CreateNaniteMesh("vase.obj", "vase_test");
+    //printf("");
     
 	const char* nanite_path       = "vase_nanite";
     const char* reference_path    = "vase.obj";
@@ -422,6 +432,15 @@ void Initialization() {
 
     nanite_obj->SetShader(maxblinn_shader);
     nanite_obj->SetDrawColor(vec3(1.0f, 0.0f, 0));
+
+    //NaniteMesh* test_mesh = (NaniteMesh*)nanite_obj->GetMesh();
+    //GPUBuffer test_buffer;
+
+    //if (!test_buffer.GetFaceBuffer())
+    //    printf("WAT");
+
+    //NaniteRenderer::GetInstance()->FillBuffer(test_mesh, test_buffer.GetFaceBuffer(), 0);
+    //printf("A");
 
     // Axe
     //nanite_obj->SetModelMatrix(ScaleMatrix(vec3(0.02, 0.02, 0.02)));
@@ -716,21 +735,22 @@ int main(int argc, char* argv[])
         ImGui::Text("Last Frame Time (ms):");
         ImGui::Text(std::to_string(fps_counter.GetLastFrametime()).c_str());
         if (ImGui::Button("Start Stationary FPS Benchmark")) {
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 1, distances, 20, 1);
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1);
         }
 
         if (ImGui::Button("Start Moving FPS Benchmark")) {
-            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances.front(), distances.back(), 20, 1);
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances, 20, 1);
         }
 
         if (ImGui::Button("Start Image Difference Benchmark")) {
-            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances);
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, 20, 1);
         }
 
         if (ImGui::Button("Start Combined Benchmark")) {
             std::string date_str = Timer::GetCurrentTimeStr();
             Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1, date_str.c_str());
-            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, date_str.c_str());
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, 20, 1, date_str.c_str());
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances, 20, 1, date_str.c_str());
         }
 
         ImGui::End();

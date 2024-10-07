@@ -78,13 +78,13 @@ public:
 	StaticMesh(std::vector<Vertex>& _vertices, std::vector<Face>& _faces) {
 		vertices = std::vector<Vertex>(_vertices);
 		faces = std::vector<Face>(_faces);
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
 	};
 
 	StaticMesh(const StaticMesh& other) {
 		vertices = std::vector<Vertex>(other.vertices);
 		faces = std::vector<Face>(other.faces);
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
 	}
 
 	StaticMesh(std::string file_name, bool use_omesh_preliminary = false) {
@@ -139,7 +139,7 @@ public:
 		//	printf("\t%f %f %f\n", vert.position.x, vert.position.y, vert.position.z);
 		//}
 
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
 
 		printf("Number of vertices loaded: %u | Faces: %u\n", vertices.size(), faces.size());
 	}
@@ -169,7 +169,7 @@ public:
 		}
 	}
 
-	void SetFaces(std::vector<Face>& faces) {
+	void SetFaces(const std::vector<Face>& faces) {
 		this->faces = std::vector<Face>(faces);
 	}
 
@@ -220,7 +220,27 @@ public:
 		return area;
 	}
 
-	void Update(float center_distance_from_camera) override {
+	// Only used when the vertices are not stored in the mesh itself
+	float GetSurfaceArea(const std::vector<Vertex>& provided_vertices) {
+		float area = 0.0f;
+		for (const auto& face : faces) {
+			const auto& a_vert = provided_vertices[face.a].position;
+			const auto& b_vert = provided_vertices[face.b].position;
+			const auto& c_vert = provided_vertices[face.c].position;
+
+			float a = length(a_vert - b_vert);
+			float b = length(a_vert - c_vert);
+			float c = length(b_vert - c_vert);
+
+			area += length(cross(a_vert - b_vert, a_vert - c_vert)) / 2;
+
+			//area += (1.f / 4.f) * sqrtf((a + b - c) * (a - b + c) * (-a + b + c) * (a + b + c));
+		}
+
+		return area;
+	}
+
+	void Update(float center_distance_from_camera, FaceBuffer* o_faces) override {
 		return;
 	}
 

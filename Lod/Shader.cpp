@@ -164,8 +164,8 @@ void Shader::Reload()
 }
 
 void Shader::Activate() {
-    if (Id != LAST_PROGRAM_LOADED) {
         glUseProgram(Id);
-        LAST_PROGRAM_LOADED = Id;
-    }
+    //if (Id != LAST_PROGRAM_LOADED) {
+    //    LAST_PROGRAM_LOADED = Id;
+    //}
 }

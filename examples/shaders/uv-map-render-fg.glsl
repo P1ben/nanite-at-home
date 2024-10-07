@@ -25,5 +25,5 @@ layout (std140, binding = 3) uniform Object {
 out vec4 fragmentColor;
 
 void main() {
-    fragmentColor = worldNormal;
+    fragmentColor = vec4(vertexColor, 1.0);
 }

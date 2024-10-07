@@ -133,6 +133,10 @@ public:
 		return inner_static_mesh.GetVertices();
 	}
 
+	const virtual std::vector<Face>& GetFaces() {
+		return inner_static_mesh.GetFaces();
+	}
+
 	bool ShouldShow(float metric) {
 		//if (marked)
 		//	return true;
@@ -153,6 +157,10 @@ public:
 
 		// Prone to error, but looks good on dragon mesh
 		return error * childsib_triangle_density < calc_metric;
+	}
+
+	float GetMetric() {
+		return error * childsib_triangle_density;
 	}
 
 	LodDecision IsUpdateRequired(float center_distance_from_camera) {
@@ -601,6 +609,10 @@ public:
 
 	}
 
+	void SetRandomColor() {
+		inner_static_mesh.SetRandomVertexColor();
+	}
+
 	void Finalize() {
 		for (OMesh::VertexIter v_i(inner_mesh.vertices_begin()); v_i != inner_mesh.vertices_end(); ++v_i) {
 			auto& position = inner_mesh.point(*v_i);
@@ -631,6 +643,10 @@ public:
 			}
 			inner_static_mesh.AddFace(face);
 		}
+	}
+
+	void SetFaces(const std::vector<Face> faces) {
+		inner_static_mesh.SetFaces(faces);
 	}
 
 	void SetParentalDensity(float density) {
@@ -667,6 +683,10 @@ public:
 
 	float GetSurfaceArea() {
 		return inner_static_mesh.GetSurfaceArea();
+	}
+
+	float GetSurfaceArea(const std::vector<Vertex>& provided_vertices) {
+		return inner_static_mesh.GetSurfaceArea(provided_vertices);
 	}
 
 	void Mark() {

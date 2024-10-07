@@ -171,8 +171,7 @@ public:
 								   Object3D*		  nanite_obj,
 								   Object3D*		  original_obj,
 								   float              animation_time,
-								   float              start_dist,
-								   float              end_dist,
+								   std::vector<float> distances,
 								   int                copy_count,
 								   int                copy_dist,
 								   const char*        custom_folder = nullptr)
@@ -180,7 +179,10 @@ public:
 		std::vector<float> nanite_fps;
 		std::vector<float> original_fps;
 
-		std::cout << "Starting Stationary FPS Benchmark" << std::endl;
+		float start_dist = distances.front();
+		float end_dist   = distances.back();
+
+		std::cout << "Starting Moving FPS Benchmark" << std::endl;
 
 		Scene test_scene;
 		test_scene.SetCamera(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)1280 / (float)720, 0.1, 100);
@@ -213,18 +215,25 @@ public:
 		fps_counter.Start();
 		timer.Start(animation_time);
 		timer.SavePoint();
+
+		int checkpoint = 1;
 		while (!timer.IsFinished()) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			test_scene.Draw();
 			SDL_GL_SwapWindow(window);
-			fps_counter.Update();
 			current_camera_x = current_camera_x + camera_move_delta * timer.GetSecondsElapsed();
 			timer.SavePoint();
 			//printf("%f\n", current_camera_x);
 			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
 			test_scene.Update();
+			fps_counter.Update();
+			if (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
+				nanite_fps.push_back(fps_counter.GetFPSAvg());
+				fps_counter.Reset();
+				checkpoint++;
+			}
 		}
-		nanite_fps.push_back(fps_counter.GetFPSAvg());
+		//nanite_fps.push_back(fps_counter.GetFPSAvg());
 		//Mesh* nanite_mesh = nanite_obj->GetMesh();
 		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
 		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
@@ -261,17 +270,23 @@ public:
 		fps_counter.Start();
 		timer.Start(animation_time);
 		timer.SavePoint();
+		checkpoint = 1;
 		while (!timer.IsFinished()) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			test_scene.Draw();
 			SDL_GL_SwapWindow(window);
-			fps_counter.Update();
 			current_camera_x = current_camera_x + camera_move_delta * timer.GetSecondsElapsed();
 			timer.SavePoint();
 			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
 			test_scene.Update();
+			fps_counter.Update();
+			if (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
+				original_fps.push_back(fps_counter.GetFPSAvg());
+				fps_counter.Reset();
+				checkpoint++;
+			}
 		}
-		original_fps.push_back(fps_counter.GetFPSAvg());
+		//original_fps.push_back(fps_counter.GetFPSAvg());
 		//Mesh* nanite_mesh = nanite_obj->GetMesh();
 		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
 		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
@@ -291,7 +306,7 @@ public:
 			date_str = Timer::GetCurrentTimeStr();
 		}
 
-		std::string filename = "StationaryFPSBenchmark_" + date_str + ".csv";
+		std::string filename = "MovingFPSBenchmark_" + date_str + ".csv";
 		std::string folder = BENCHMARK_SAVE_PATH + date_str;
 
 		CreateFolder(folder.c_str());
@@ -299,7 +314,7 @@ public:
 		std::string save_path = folder + "\\" + filename;
 
 		std::vector<std::vector<std::string>> data;
-		data.push_back({ "",
+		data.push_back({ "Distance",
 						 "Nanite FPS",
 						 "Reference FPS",
 						 //"Nanite Triangle Count",
@@ -308,8 +323,8 @@ public:
 						 //"Reference Vertex Count",
 			});
 
-		for (int i = 0; i < 1; i++) {
-			data.push_back({ "Averages",
+		for (int i = 0; i < distances.size() - 2; i++) {
+			data.push_back({ std::to_string(distances[i + 1]),
 							 std::to_string(nanite_fps[i]),
 							 std::to_string(original_fps[i]),
 							 //std::to_string(nanite_mesh_triangle_count[i]),
@@ -325,6 +340,8 @@ public:
 	static void ImageDifferenceBenchmark(Object3D*          nanite_obj,
 										 Object3D*          original_obj,
 										 std::vector<float> distances,
+										 int                copy_count,
+										 int                copy_dist,
 										 const char*        custom_folder = nullptr)
 	{
 		uint32_t img_w = 1920;
@@ -347,7 +364,18 @@ public:
 		Scene test_scene;
 		test_scene.SetCamera(vec3(0, 0, 0), vec3(0, 0, 0), vec3(0, 1, 0), 75. * M_PI / 180., (float)1920 / (float)1080, 0.1, 100);
 
-		test_scene.AddObject(nanite_obj);
+		std::vector<Object3D*> nanite_objs;
+		for (int i = 0; i < copy_count; i++) {
+			nanite_objs.push_back(new Object3D(*nanite_obj));
+			if (i % 2 == 0) {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, 1.f)) * i * copy_dist);
+			}
+			else {
+				nanite_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
+			test_scene.AddObject(nanite_objs.back());
+		}
+
 
 		std::vector<double>   errors;
 		std::vector<uint32_t> nanite_mesh_triangle_count;
@@ -369,8 +397,22 @@ public:
 			std::cout << "\tSaved result to: " << result_file << std::endl;
 		}
 
-		test_scene.RemoveObject(nanite_obj);
-		test_scene.AddObject(original_obj);
+		test_scene.ClearAll();
+		for (auto* obj : nanite_objs) {
+			delete obj;
+		}
+
+		std::vector<Object3D*> reference_objs;
+		for (int i = 0; i < copy_count; i++) {
+			reference_objs.push_back(new Object3D(*original_obj));
+			if (i % 2 == 0) {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, 1.f)) * i * copy_dist);
+			}
+			else {
+				reference_objs.back()->SetWorldPosition(normalize(vec3(-1.f, .0f, -1.f)) * i * copy_dist);
+			}
+			test_scene.AddObject(reference_objs.back());
+		}
 
 		std::cout << "Starting Reference benchmark" << std::endl;
 		for (float dist : distances) {
@@ -384,6 +426,12 @@ public:
 			original_mesh_vertex_count.push_back(original_mesh->GetVertices().size());
 			std::cout << "\tSaved result to: " << result_file << std::endl;
 		}
+
+		test_scene.ClearAll();
+		for (auto* obj : reference_objs) {
+			delete obj;
+		}
+
 
 		for (float dist : distances) {
 			std::string nanite_file = folder + "\\" + "nanite_" + std::to_string(dist) + ".png";

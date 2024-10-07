@@ -1,6 +1,8 @@
 #pragma once
 #include <fstream>
 #include <unordered_map>
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <experimental/filesystem>
 
 #include "../StaticMesh.h"
 #include "../framework.h"
@@ -14,6 +16,7 @@ private:
 		FACE,
 		TEXTURE,
 		NORMAL,
+		CLUSTER_SEPARATOR,
 		UNKNOWN,
 	};
 
@@ -70,6 +73,9 @@ private:
 		else if (line_tokens[0] == "vn") {
 			return ObjLineType::NORMAL;
 		}
+		else if (line_tokens[0] == "new_cluster") {
+			return ObjLineType::CLUSTER_SEPARATOR;
+		}
 		else {
 			return ObjLineType::UNKNOWN;
 		}
@@ -121,19 +127,19 @@ private:
 		face_tokens_temp[2] = tokens[2];
 		face_tokens_temp[3] = tokens[3];
 
-		faces.push_back(ParseFace(face_tokens_temp));
+		faces.push_back(ParseFace(face_tokens_temp, 0, 0, 0));
 
 		face_tokens_temp[0] = tokens[0];
 		face_tokens_temp[1] = tokens[1];
 		face_tokens_temp[2] = tokens[3];
 		face_tokens_temp[3] = tokens[4];
 
-		faces.push_back(ParseFace(face_tokens_temp));
+		faces.push_back(ParseFace(face_tokens_temp, 0, 0, 0));
 
 		return faces;
 	}
 
-	static ObjFace ParseFace(const TokenList& tokens) {
+	static ObjFace ParseFace(const TokenList& tokens, int vertex_offset, int normal_offset, int tex_offset) {
 		ObjFace face;
 		face.type = FaceType::VERTEX_ONLY;
 
@@ -160,9 +166,9 @@ private:
 		}
 
 		if (face.type == FaceType::VERTEX_ONLY) {
-			face.v1 = atoi(tokens[1].c_str());
-			face.v2 = atoi(tokens[2].c_str());
-			face.v3 = atoi(tokens[3].c_str());
+			face.v1 = atoi(tokens[1].c_str()) + vertex_offset;
+			face.v2 = atoi(tokens[2].c_str()) + vertex_offset;
+			face.v3 = atoi(tokens[3].c_str()) + vertex_offset;
 			return face;
 		}
 		
@@ -171,51 +177,51 @@ private:
 
 		switch (face.type) {
 			case FaceType::VERTEX_TEXTURE:
-				face.v1 = atoi(face_tokens[0].c_str());
-				face.vt1 = atoi(face_tokens[1].c_str());
+				face.v1 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt1 = atoi(face_tokens[1].c_str()) + tex_offset;
 				break;
 			case FaceType::VERTEX_NORMAL:
-				face.v1 = atoi(face_tokens[0].c_str());
-				face.vn1 = atoi(face_tokens[1].c_str());
+				face.v1 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vn1 = atoi(face_tokens[1].c_str()) + normal_offset;
 				break;
 			case FaceType::VERTEX_TEXTURE_NORMAL:
-				face.v1 = atoi(face_tokens[0].c_str());
-				face.vt1 = atoi(face_tokens[1].c_str());
-				face.vn1 = atoi(face_tokens[2].c_str());
+				face.v1 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt1 = atoi(face_tokens[1].c_str()) + tex_offset;
+				face.vn1 = atoi(face_tokens[2].c_str()) + normal_offset;
 				break;
 		}
 
 		TokenizeLine(tokens[2], face_tokens, '/');
 		switch (face.type) {
 			case FaceType::VERTEX_TEXTURE:
-				face.v2 = atoi(face_tokens[0].c_str());
-				face.vt2 = atoi(face_tokens[1].c_str());
+				face.v2 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt2 = atoi(face_tokens[1].c_str()) + tex_offset;
 				break;
 			case FaceType::VERTEX_NORMAL:
-				face.v2 = atoi(face_tokens[0].c_str());
-				face.vn2 = atoi(face_tokens[1].c_str());
+				face.v2 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vn2 = atoi(face_tokens[1].c_str()) + normal_offset;
 				break;
 			case FaceType::VERTEX_TEXTURE_NORMAL:
-				face.v2 = atoi(face_tokens[0].c_str());
-				face.vt2 = atoi(face_tokens[1].c_str());
-				face.vn2 = atoi(face_tokens[2].c_str());
+				face.v2 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt2 = atoi(face_tokens[1].c_str()) + tex_offset;
+				face.vn2 = atoi(face_tokens[2].c_str()) + normal_offset;
 				break;
 		}
 
 		TokenizeLine(tokens[3], face_tokens, '/');
 		switch (face.type) {
 			case FaceType::VERTEX_TEXTURE:
-				face.v3 = atoi(face_tokens[0].c_str());
-				face.vt3 = atoi(face_tokens[1].c_str());
+				face.v3 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt3 = atoi(face_tokens[1].c_str()) + tex_offset;
 				break;
 			case FaceType::VERTEX_NORMAL:
-				face.v3 = atoi(face_tokens[0].c_str());
-				face.vn3 = atoi(face_tokens[1].c_str());
+				face.v3 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vn3 = atoi(face_tokens[1].c_str()) + normal_offset;
 				break;
 			case FaceType::VERTEX_TEXTURE_NORMAL:
-				face.v3 = atoi(face_tokens[0].c_str());
-				face.vt3 = atoi(face_tokens[1].c_str());
-				face.vn3 = atoi(face_tokens[2].c_str());
+				face.v3 = atoi(face_tokens[0].c_str()) + vertex_offset;
+				face.vt3 = atoi(face_tokens[1].c_str()) + tex_offset;
+				face.vn3 = atoi(face_tokens[2].c_str()) + normal_offset;
 				break;
 		}
 
@@ -332,52 +338,152 @@ private:
 			int  index2 = insert_into_vertices(v2);
 			int  index3 = insert_into_vertices(v3);
 
-			//int  index1 = 0;
-			//int  index2 = 0;
-			//int  index3 = 0;
-
-			//for (int i = 0; i < Vertices.size(); i++) {
-			//	if (Vertices[i].position == v1.position && Vertices[i].uv == v1.uv) {
-			//		found = true;
-			//		index1 = i;
-			//		break;
-			//	}
-			//}
-			//if (!found) {
-			//	Vertices.push_back(v1);
-			//	index1 = Vertices.size() - 1;
-			//}
-
-			//found = false;
-			//for (int i = 0; i < Vertices.size(); i++) {
-			//	if (Vertices[i].position == v2.position && Vertices[i].uv == v2.uv) {
-			//		found = true;
-			//		index2 = i;
-			//		break;
-			//	}
-			//}
-			//if (!found) {
-			//	Vertices.push_back(v2);
-			//	index2 = Vertices.size() - 1;
-			//}
-
-			//found = false;
-			//for (int i = 0; i < Vertices.size(); i++) {
-			//	if (Vertices[i].position == v3.position && Vertices[i].uv == v3.uv) {
-			//		found = true;
-			//		index3 = i;
-			//		break;
-			//	}
-			//}
-			//if (!found) {
-			//	Vertices.push_back(v3);
-			//	index3 = Vertices.size() - 1;
-			//}
-
 			Faces.push_back(Face(index1, index2, index3));
 		}
 
 		return new StaticMesh(Vertices, Faces);
+	}
+
+	static void WriteZippedNaniteMesh(const std::string& save_path, const std::vector<Vertex>& Vertices, const std::vector<std::vector<Face>>& Faces) {
+		std::ofstream file(save_path);
+		if (!file.is_open()) {
+			std::cout << "ERROR:: ObjReader::WriteZippedNaniteMesh: Couldn't open file for writing!" << std::endl;
+			return;
+		}
+
+		const auto& vertices = Vertices;
+		const auto& clusters = Faces;
+
+		// Write vertices
+		for (const Vertex& vertex : vertices) {
+			file << "v " << vertex.position.x << " " << vertex.position.y << " " << vertex.position.z << std::endl;
+		}
+
+		// Write normals
+		for (const Vertex& vertex : vertices) {
+			file << "vn " << vertex.normal.x << " " << vertex.normal.y << " " << vertex.normal.z << std::endl;
+		}
+
+		// Write texture coordinates
+		for (const Vertex& vertex : vertices) {
+			file << "vt " << vertex.uv.x << " " << vertex.uv.y << std::endl;
+		}
+
+		// Write faces
+		for (const auto& faces : clusters) {
+			file << "new_cluster" << std::endl;
+			for (const Face& face : faces) {
+				file << "f " << face.a + 1 << "/" << face.a + 1 << "/" << face.a + 1 << " "
+					<< face.b + 1 << "/" << face.b + 1 << "/" << face.b + 1 << " "
+					<< face.c + 1 << "/" << face.c + 1 << "/" << face.c + 1 << std::endl;
+			}
+		}
+
+		file.close();
+	}
+
+	static void CreateZippedNaniteMesh(const std::string& save_path, std::vector<vec3>& vertices, const std::vector<vec3>& normals, const std::vector<vec2>& tex_coords, const std::vector< std::vector<ObjFace>>& faces) {
+		std::unordered_map<Vertex, int> VertexMap;
+		std::vector<Vertex>             Vertices;
+		std::vector<std::vector<Face>>  Faces(faces.size());
+
+		auto insert_into_vertices = [&](Vertex num) -> int {
+			// Check if the number is already in the map
+			if (VertexMap.find(num) != VertexMap.end()) {
+				return VertexMap[num]; // Return the index if found
+			}
+
+			// If not found, insert the number into the vector
+			int newIndex = Vertices.size();
+			Vertices.push_back(num);
+
+			// Store the index of the number in the map
+			VertexMap[num] = newIndex;
+
+			return newIndex; // Return the new index
+			};
+		int cluster_index = 0;
+		for (const std::vector<ObjFace>& face_l : faces) {
+			for (const ObjFace& face : face_l) {
+				Vertex v1, v2, v3;
+
+				if (face.v1 >= 0) {
+					v1.position = vertices[face.v1 - 1];
+				}
+				else {
+					v1.position = vertices[vertices.size() + face.v1];
+				}
+
+				if (face.v2 >= 0) {
+					v2.position = vertices[face.v2 - 1];
+				}
+				else {
+					v2.position = vertices[vertices.size() + face.v2];
+				}
+
+				if (face.v3 >= 0) {
+					v3.position = vertices[face.v3 - 1];
+				}
+				else {
+					v3.position = vertices[vertices.size() + face.v3];
+				}
+
+				if (face.type == FaceType::VERTEX_TEXTURE || face.type == FaceType::VERTEX_TEXTURE_NORMAL) {
+					if (face.vt1 >= 0) {
+						v1.uv = tex_coords[face.vt1 - 1];
+					}
+					else {
+						v1.uv = tex_coords[tex_coords.size() + face.vt1];
+					}
+
+					if (face.vt2 >= 0) {
+						v2.uv = tex_coords[face.vt2 - 1];
+					}
+					else {
+						v2.uv = tex_coords[tex_coords.size() + face.vt2];
+					}
+
+					if (face.vt3 >= 0) {
+						v3.uv = tex_coords[face.vt3 - 1];
+					}
+					else {
+						v3.uv = tex_coords[tex_coords.size() + face.vt3];
+					}
+				}
+
+				if (face.type == FaceType::VERTEX_NORMAL || face.type == FaceType::VERTEX_TEXTURE_NORMAL) {
+					if (face.vn1 >= 0) {
+						v1.normal = normals[face.vn1 - 1];
+					}
+					else {
+						v1.normal = normals[normals.size() + face.vn1];
+					}
+
+					if (face.vn2 >= 0) {
+						v2.normal = normals[face.vn2 - 1];
+					}
+					else {
+						v2.normal = normals[normals.size() + face.vn2];
+					}
+
+					if (face.vn3 >= 0) {
+						v3.normal = normals[face.vn3 - 1];
+					}
+					else {
+						v3.normal = normals[normals.size() + face.vn3];
+					}
+				}
+
+				bool found = false;
+				int  index1 = insert_into_vertices(v1);
+				int  index2 = insert_into_vertices(v2);
+				int  index3 = insert_into_vertices(v3);
+
+				Faces[cluster_index].push_back(Face(index1, index2, index3));
+			}
+			cluster_index++;
+		}
+		WriteZippedNaniteMesh(save_path, Vertices, Faces);
 	}
 
 public:
@@ -415,7 +521,7 @@ public:
 					}
 				}
 				else {
-					ObjFace face = ObjReader::ParseFace(line_tokens);
+					ObjFace face = ObjReader::ParseFace(line_tokens, 0, 0, 0);
 					if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
 						faces.push_back(face);
 					}				
@@ -436,6 +542,87 @@ public:
 			line_number++;
 		}
 		return CreateMesh(vertices, normals, tex_coords, faces);
+	}
+
+	static void ZipNaniteMesh(const std::string& folder_path) {
+		std::vector<std::string> cluster_files;
+		std::string config_file;
+
+		for (const auto& entry : std::experimental::filesystem::directory_iterator(folder_path)) {
+			std::string path = entry.path().string();
+			if (str_has_suffix(path, ".conf")) {
+				config_file = path;
+			}
+			else if (str_has_suffix(path, ".obj")) {
+				cluster_files.push_back(path);
+			}
+		}
+
+		std::sort(cluster_files.begin(), cluster_files.end());
+
+		std::vector<vec3>    vertices;
+		std::vector<vec3>    normals;
+		std::vector<vec2>    tex_coords;
+		std::vector<std::vector<ObjFace>> faces(cluster_files.size());
+
+		int cluster_index = 0;
+		int offset = vertices.size();
+		for (const auto& file_name : cluster_files) {
+			std::ifstream file(file_name);
+			std::string s;
+			uint32_t line_number = 1;
+
+			TokenList line_tokens;
+			line_tokens.reserve(5);
+
+			int vertex_offset = vertices.size();
+			int normal_offset = normals.size();
+			int tex_offset    = tex_coords.size();
+			while (getline(file, s)) {
+				line_tokens.clear();
+
+				// Fill line_tokens with line tokens
+				TokenizeLine(s, line_tokens, ' ');
+				ObjLineType line_type = GetLineType(line_tokens);
+
+				switch (line_type) {
+				case ObjLineType::VERTEX:
+					vertices.push_back(ObjReader::ParseVertex(line_tokens));
+					break;
+				case ObjLineType::FACE:
+					if (line_tokens.size() > 4) {
+						std::vector<ObjFace> faces_temp = ObjReader::ParseFaceList(line_tokens);
+						for (ObjFace& face : faces_temp) {
+							if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+								faces[cluster_index].push_back(face);
+							}
+						}
+					}
+					else {
+						ObjFace face = ObjReader::ParseFace(line_tokens, vertex_offset, normal_offset, tex_offset);
+						if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+							faces[cluster_index].push_back(face);
+						}
+					}
+					break;
+				case ObjLineType::TEXTURE:
+					tex_coords.push_back(ObjReader::ParseTexCoord(line_tokens));
+					break;
+				case ObjLineType::NORMAL:
+					normals.push_back(ObjReader::ParseNormal(line_tokens));
+					break;
+
+					// Handle unknown line types
+				case ObjLineType::UNKNOWN:
+				default:
+					std::cout << "WARNING:: ObjReader found a problem on line " << line_number << " in file " << file_name << std::endl;
+				}
+				line_number++;
+			}
+			cluster_index++;
+		}
+
+		CreateZippedNaniteMesh(folder_path + "\\object.objx", vertices, normals, tex_coords, faces);
 	}
 
 	static void ReduceToTriangles(const char* input_path, const char* output_path) {
@@ -529,5 +716,83 @@ public:
 		}
 
 		file.close();
+	}
+
+	static void ReadZippedNaniteMesh(const std::string& file_path, std::vector<Vertex>& vertex_out, std::vector<std::vector<Face>>& cluster_face_out) {
+		std::vector<vec3>    vertices;
+		std::vector<vec3>    normals;
+		std::vector<vec2>    tex_coords;
+		std::vector<std::vector<ObjFace>> faces;
+		std::ifstream file(file_path);
+
+		std::string s;
+		uint32_t line_number = 1;
+
+		TokenList line_tokens;
+		line_tokens.reserve(5);
+
+		while (getline(file, s)) {
+			line_tokens.clear();
+
+			// Fill line_tokens with line tokens
+			TokenizeLine(s, line_tokens, ' ');
+			ObjLineType line_type = GetLineType(line_tokens);
+
+			switch (line_type) {
+			case ObjLineType::VERTEX:
+				vertices.push_back(ObjReader::ParseVertex(line_tokens));
+				break;
+			case ObjLineType::FACE:
+				if (line_tokens.size() > 4) {
+					std::vector<ObjFace> faces_temp = ObjReader::ParseFaceList(line_tokens);
+					for (ObjFace& face : faces_temp) {
+						if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+							faces.back().push_back(face);
+						}
+					}
+				}
+				else {
+					ObjFace face = ObjReader::ParseFace(line_tokens, 0, 0, 0);
+					if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+						faces.back().push_back(face);
+					}
+				}
+				break;
+			case ObjLineType::TEXTURE:
+				tex_coords.push_back(ObjReader::ParseTexCoord(line_tokens));
+				break;
+			case ObjLineType::NORMAL:
+				normals.push_back(ObjReader::ParseNormal(line_tokens));
+				break;
+			case ObjLineType::CLUSTER_SEPARATOR:
+				faces.push_back(std::vector<ObjFace>());
+				break;
+			// Handle unknown line types
+			case ObjLineType::UNKNOWN:
+			default:
+				std::cout << "WARNING:: ObjReader found a problem on line " << line_number << " in file " << file_path << std::endl;
+			}
+			line_number++;
+		}
+
+		for (int i = 0; i < vertices.size(); i++) {
+			Vertex v;
+			v.position = vertices[i];
+			v.normal = normals[i];
+			v.uv = tex_coords[i];
+			vertex_out.push_back(v);
+		}
+
+		for (const auto& cluster : faces) {
+			std::vector<Face> cluster_faces;
+			for (const auto& face : cluster) {
+				Face f;
+				f.a = face.v1 - 1;
+				f.b = face.v2 - 1;
+				f.c = face.v3 - 1;
+				cluster_faces.push_back(f);
+			}
+			cluster_face_out.push_back(cluster_faces);
+		}
 	}
 };

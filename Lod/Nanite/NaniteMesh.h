@@ -2,15 +2,27 @@
 #include "Cluster.h"
 #include "../framework.h"
 #include "../GraphPartitioner.h"
+#include "../Compute/ClusterBuffer.h"
+#include "../Compute/FaceBuffer.h"
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <experimental/filesystem>
+#include "../Compute/NaniteRenderer.h"
 
 #define BASE_CLUSTER_SIZE 128
 
 class NaniteMesh : public Mesh {
+	enum VertexOwnership {
+		CLUSTER,
+		MASTER
+	};
+
+	VertexOwnership      vertex_ownership = MASTER;
 	std::vector<Cluster> clusters;
 
 	std::vector<CLUSTER_ID> active_clusters;
+
+	ClusterBuffer* cluster_buffer = nullptr;
+	FaceBuffer*    face_buffer    = nullptr;
 
 	// Current mesh
 	std::vector<Vertex> vertices;
@@ -59,6 +71,18 @@ class NaniteMesh : public Mesh {
 				else {
 					for (auto& chld : children) {
 						chld.FillFaceVertRecursive(cut_metric, clusters, faces, verts);
+					}
+				}
+			}
+
+			void FillFacesRecursive(float cut_metric, std::vector<Cluster>& clusters, std::vector<Face>& faces) {
+				if (clusters[cluster_id].ShouldShow(cut_metric)) {
+					std::vector<Face> clstr_fc = clusters[cluster_id].GetFaces();
+					faces.insert(faces.end(), clstr_fc.begin(), clstr_fc.end());
+				}
+				else {
+					for (auto& chld : children) {
+						chld.FillFacesRecursive(cut_metric, clusters, faces);
 					}
 				}
 			}
@@ -119,6 +143,14 @@ class NaniteMesh : public Mesh {
 			}
 		}
 
+		void FillFaces(float cut_metric, std::vector<Cluster>& clusters, std::vector<Face>& faces) {
+			faces.clear();
+
+			for (auto& root : root_nodes) {
+				root.FillFacesRecursive(cut_metric, clusters, faces);
+			}
+		}
+
 		uint32_t CountNodes() {
 			uint32_t counter = 0;
 			for (auto& root : root_nodes) {
@@ -133,20 +165,29 @@ class NaniteMesh : public Mesh {
 
 	float camera_last_dist = 0.f;
 
-
 	int cluster_count = 0;
 	int face_count = 0;
 
+	uint32_t max_face_count = 0;
+
 	void UpdateCurrentMesh() {
 		this->faces.clear();
-		this->vertices.clear();
+		if (vertex_ownership == CLUSTER) {
+			this->vertices.clear();
+		}
 
 		for (auto cluster_id : active_clusters) {
-			std::vector<Face> clstr_fc = clusters[cluster_id].GetFacesWithOffset(vertices.size());
-			this->faces.insert(this->faces.end(), clstr_fc.begin(), clstr_fc.end());
+			if (vertex_ownership == CLUSTER) {
+				std::vector<Face> clstr_fc = clusters[cluster_id].GetFacesWithOffset(vertices.size());
+				this->faces.insert(this->faces.end(), clstr_fc.begin(), clstr_fc.end());
 
-			std::vector<Vertex> clstr_vtx = clusters[cluster_id].GetVertices();
-			this->vertices.insert(this->vertices.end(), clstr_vtx.begin(), clstr_vtx.end());
+				std::vector<Vertex> clstr_vtx = clusters[cluster_id].GetVertices();
+				this->vertices.insert(this->vertices.end(), clstr_vtx.begin(), clstr_vtx.end());
+			}
+			else {
+				std::vector<Face> clstr_fc = clusters[cluster_id].GetFaces();
+				this->faces.insert(this->faces.end(), clstr_fc.begin(), clstr_fc.end());
+			}
 		}
 	}
 
@@ -160,88 +201,154 @@ class NaniteMesh : public Mesh {
 
 	void UpdateDensityForClusters() {
 		int counter = 0;
-		for (auto& cluster : clusters) {
-			if (!cluster.IsMarked()) {
+		if (vertex_ownership == CLUSTER) {
+			for (auto& cluster : clusters) {
+				if (!cluster.IsMarked()) {
 
-				// Parental
-				float area_sum = cluster.GetSurfaceArea();
-				uint32_t triangle_count = cluster.GetFaceCount();
-				for (auto par_sib : cluster.GetParentalSiblings()) {
-					//clusters[par_sib].Mark();
-					area_sum += clusters[par_sib].GetSurfaceArea();
-					triangle_count += clusters[par_sib].GetFaceCount();
-				}
+					// Parental
+					float area_sum = cluster.GetSurfaceArea();
+					uint32_t triangle_count = cluster.GetFaceCount();
+					for (auto par_sib : cluster.GetParentalSiblings()) {
+						//clusters[par_sib].Mark();
+						area_sum += clusters[par_sib].GetSurfaceArea();
+						triangle_count += clusters[par_sib].GetFaceCount();
+					}
 
-				cluster.SetParentalArea(area_sum);
-				//cluster.SetParentalDensity(triangle_count / area_sum);
-				cluster.SetParentalDensity(triangle_count / area_sum);
+					cluster.SetParentalArea(area_sum);
+					//cluster.SetParentalDensity(triangle_count / area_sum);
+					cluster.SetParentalDensity(triangle_count / area_sum);
 
-				// Childsib
-				area_sum = cluster.GetSurfaceArea();
-				triangle_count = cluster.GetFaceCount();
-				for (auto chld_sib : cluster.GetChildSiblings()) {
-					//clusters[chld_sib].Mark();
-					area_sum += clusters[chld_sib].GetSurfaceArea();
-					triangle_count += clusters[chld_sib].GetFaceCount();
-				}
+					// Childsib
+					area_sum = cluster.GetSurfaceArea();
+					triangle_count = cluster.GetFaceCount();
+					for (auto chld_sib : cluster.GetChildSiblings()) {
+						//clusters[chld_sib].Mark();
+						area_sum += clusters[chld_sib].GetSurfaceArea();
+						triangle_count += clusters[chld_sib].GetFaceCount();
+					}
 
-				cluster.SetChildsibArea(area_sum);
-				cluster.SetChildsibDensity(triangle_count / area_sum);
-				//cluster.SetChildsibDensity(triangle_count / area_sum);
+					cluster.SetChildsibArea(area_sum);
+					cluster.SetChildsibDensity(triangle_count / area_sum);
+					//cluster.SetChildsibDensity(triangle_count / area_sum);
 
-				cluster.PrintDensity();
-				counter++;
-			}
-		}
-
-
-		int ne_prob = 0;
-		int parent_prob = 0;
-
-		for (auto& cluster : clusters) {
-			float cluster_ch_d = cluster.GetChildsibDensity();
-			for (auto chld_sib : cluster.GetChildSiblings()) {
-				if (clusters[chld_sib].GetChildsibDensity() != cluster_ch_d) {
-					printf("\tProblem with cluster %d: \n", cluster.GetId());
-					printf("\t\tSelf child sibling density:       %f\n", cluster_ch_d);
-					printf("\t\tCluster %d child sibling density: %f\n", chld_sib, clusters[chld_sib].GetChildsibDensity());
-					ne_prob++;
+					cluster.PrintDensity();
+					counter++;
 				}
 			}
 		}
+		else {
+			for (auto& cluster : clusters) {
+				if (!cluster.IsMarked()) {
 
-		bool found_err = false;
+					// Parental
+					float area_sum = cluster.GetSurfaceArea(vertices);
+					uint32_t triangle_count = cluster.GetFaceCount();
+					for (auto par_sib : cluster.GetParentalSiblings()) {
+						//clusters[par_sib].Mark();
+						area_sum += clusters[par_sib].GetSurfaceArea(vertices);
+						triangle_count += clusters[par_sib].GetFaceCount();
+					}
 
-		for (auto& cluster : clusters) {
-			for (auto chld_par : cluster.GetParents()) {
-				if (clusters[chld_par].GetChildsibDensity() >= cluster.GetParentalDensity()) {
-					printf("\tParent problem with cluster %d: \n", cluster.GetId());
-					printf("\t\tSelf child sibling density:       %f\n", cluster.GetParentalDensity());
-					printf("\t\tParent cluster %d child sibling density: %f\n", chld_par, clusters[chld_par].GetChildsibDensity());
-					printf("\t\tSelf area: %f\n", cluster.GetParentalArea());
-					printf("\t\tParent cluster %d area: %f\n", chld_par, clusters[chld_par].GetChildsibArea());
-					printf("\t\tCluster childsib count: %d\n", cluster.GetChildSiblings().size());
+					cluster.SetParentalArea(area_sum);
+					//cluster.SetParentalDensity(triangle_count / area_sum);
+					cluster.SetParentalDensity(triangle_count / area_sum);
 
-					cluster.PrintDetails();
-					parent_prob++;
-					found_err = false;
-					//clusters[chld_par].Mark();
+					// Childsib
+					area_sum = cluster.GetSurfaceArea(vertices);
+					triangle_count = cluster.GetFaceCount();
+					for (auto chld_sib : cluster.GetChildSiblings()) {
+						//clusters[chld_sib].Mark();
+						area_sum += clusters[chld_sib].GetSurfaceArea(vertices);
+						triangle_count += clusters[chld_sib].GetFaceCount();
+					}
+
+					cluster.SetChildsibArea(area_sum);
+					cluster.SetChildsibDensity(triangle_count / area_sum);
+					//cluster.SetChildsibDensity(triangle_count / area_sum);
+
+					//cluster.PrintDensity();
+					counter++;
 				}
 			}
-			//cluster.Mark();
-
-			//for (auto chld_sib : cluster.GetChildSiblings()) {
-			//	clusters[chld_sib].Mark();
-			//}
-
-			if (found_err)
-				break;
-
 		}
 
-		printf("Clusters affected: %d\n", counter);
-		printf("\tNot equal problems: %d\n", ne_prob);
-		printf("\tParental problems: %d\n", parent_prob);
+		// DEBUG LOGS
+		//int ne_prob = 0;
+		//int parent_prob = 0;
+
+		//for (auto& cluster : clusters) {
+		//	float cluster_ch_d = cluster.GetChildsibDensity();
+		//	for (auto chld_sib : cluster.GetChildSiblings()) {
+		//		if (clusters[chld_sib].GetChildsibDensity() != cluster_ch_d) {
+		//			printf("\tProblem with cluster %d: \n", cluster.GetId());
+		//			printf("\t\tSelf child sibling density:       %f\n", cluster_ch_d);
+		//			printf("\t\tCluster %d child sibling density: %f\n", chld_sib, clusters[chld_sib].GetChildsibDensity());
+		//			ne_prob++;
+		//		}
+		//	}
+		//}
+
+		//bool found_err = false;
+
+		//for (auto& cluster : clusters) {
+		//	for (auto chld_par : cluster.GetParents()) {
+		//		if (clusters[chld_par].GetChildsibDensity() >= cluster.GetParentalDensity()) {
+		//			printf("\tParent problem with cluster %d: \n", cluster.GetId());
+		//			printf("\t\tSelf child sibling density:       %f\n", cluster.GetParentalDensity());
+		//			printf("\t\tParent cluster %d child sibling density: %f\n", chld_par, clusters[chld_par].GetChildsibDensity());
+		//			printf("\t\tSelf area: %f\n", cluster.GetParentalArea());
+		//			printf("\t\tParent cluster %d area: %f\n", chld_par, clusters[chld_par].GetChildsibArea());
+		//			printf("\t\tCluster childsib count: %d\n", cluster.GetChildSiblings().size());
+
+		//			cluster.PrintDetails();
+		//			parent_prob++;
+		//			found_err = false;
+		//			//clusters[chld_par].Mark();
+		//		}
+		//	}
+		//	//cluster.Mark();
+
+		//	//for (auto chld_sib : cluster.GetChildSiblings()) {
+		//	//	clusters[chld_sib].Mark();
+		//	//}
+
+		//	if (found_err)
+		//		break;
+
+		//}
+
+		//printf("Clusters affected: %d\n", counter);
+		//printf("\tNot equal problems: %d\n", ne_prob);
+		//printf("\tParental problems: %d\n", parent_prob);
+	}
+
+	void CreateClusterBuffer() {
+		std::vector<ClusterData> cluster_data;
+		std::vector<Face>        faces;
+
+		for (auto& clstr : clusters) {
+			ClusterData data;
+			data.face_start = faces.size();
+			const auto& face_data = clstr.GetFaces();
+			faces.insert(faces.end(), face_data.begin(), face_data.end());
+			data.faces_length = clstr.GetFaces().size();
+			data.self_cutoff  = clstr.GetMetric();
+			//printf("Metrix: %f\n", clstr.GetMetric());
+
+			if (clstr.GetRoot()) {
+				data.parental_cutoff = FLT_MAX;
+			}
+			else {
+				data.parental_cutoff = clusters[clstr.GetParents()[0]].GetMetric();
+			}
+
+			cluster_data.push_back(data);
+		}
+
+		face_buffer = new FaceBuffer(0);
+		face_buffer->ManualFill(faces);
+
+		cluster_buffer = new ClusterBuffer(cluster_data);
 	}
 
 public:
@@ -282,15 +389,18 @@ public:
 		for (auto& clstr : clusters) {
 			face_count += clstr.GetFaceCount();
 			clstr.CalculateCenterFromInnerMesh();
+			if (clstr.GetLeaf()) {
+				max_face_count += clstr.GetFaceCount();
+			}
 		}
 
 		RecalculateFaceCount();
 
 		faces.reserve(face_count);
-		vertices.reserve(face_count * 1.5f);
+		//vertices.reserve(face_count * 1.5f);
 
 		UpdateCurrentMesh();
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
 	}
 
 	NaniteMesh(const std::string& folder_path) {
@@ -298,6 +408,8 @@ public:
 		std::vector<std::string> cluster_files;
 		std::string config_file;
 
+		bool is_zipped = false;
+		std::string zip_path;
 		for (const auto& entry : std::experimental::filesystem::directory_iterator(folder_path)) {
 			//printf("%s\n", entry.path().string().c_str());
 			std::string path = entry.path().string();
@@ -307,18 +419,40 @@ public:
 			else if (str_has_suffix(path, ".obj")) {
 				cluster_files.push_back(path);
 			}
+			else if (str_has_suffix(path, ".objx")) {
+				zip_path = path;
+				is_zipped = true;
+			}
 			/*clusters.push_back(Cluster());
 			clusters[clusters.size() - 1].Load(entry.path().string());
 			clusters[clusters.size() - 1].SetId(i++);*/
 		}
 
-		std::sort(cluster_files.begin(), cluster_files.end());
+		if (is_zipped) {
+			std::vector<Vertex>            _vertices;
+			std::vector<std::vector<Face>> cluster_faces;
 
-		clusters = std::vector<Cluster>(cluster_files.size(), Cluster());
+			ObjReader::ReadZippedNaniteMesh(zip_path, _vertices, cluster_faces);
+			clusters = std::vector<Cluster>(cluster_faces.size(), Cluster());
+			for (int i = 0; i < cluster_faces.size(); i++) {
+				clusters[i].SetFaces(cluster_faces[i]);
+			}
+			this->vertices   = _vertices;
+			for (auto& cluster : clusters) {
+				cluster.SetRandomColor();
+			}
+			vertex_ownership = MASTER;
+		}
+		else {
+			std::sort(cluster_files.begin(), cluster_files.end());
 
-		// Loading cluster mesh data
-		for (int i = 0; i < cluster_files.size(); i++) {
-			clusters[i].Load(cluster_files[i]);
+			clusters = std::vector<Cluster>(cluster_files.size(), Cluster());
+
+			// Loading cluster mesh data
+			for (int i = 0; i < cluster_files.size(); i++) {
+				clusters[i].Load(cluster_files[i]);
+			}
+			vertex_ownership = CLUSTER;
 		}
 
 		// Loading cluster config
@@ -435,6 +569,7 @@ public:
 		for (Cluster& clr : clusters) {
 			if (clr.GetLeaf()) {
 				active_clusters.push_back(clr.GetId());
+				max_face_count += clr.GetFaceCount();
 			}
 			//clr.FixBoundaryNormals2(clusters);
 		}
@@ -446,11 +581,15 @@ public:
 		RecalculateFaceCount();
 		UpdateDensityForClusters();
 
+		if (vertex_ownership == MASTER) {
+			CreateClusterBuffer();
+		}
+
 		faces.reserve(face_count);
 		vertices.reserve(face_count);
 
 		UpdateCurrentMesh();
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
 	}
 
 	NaniteMesh(const std::vector<Cluster>& clstr) {
@@ -466,7 +605,15 @@ public:
 		vertices.reserve(face_count * 1.5f);
 
 		UpdateCurrentMesh();
-		this->SetUpdated(true);
+		this->SetUpdated(VERTEX_FACE_UPDATE);
+	}
+
+	ClusterBuffer* GetClusterBuffer() {
+		return cluster_buffer;
+	}
+
+	FaceBuffer* GetFaceBuffer() {
+		return face_buffer;
 	}
 
 	void Reset() {
@@ -479,7 +626,11 @@ public:
 
 		UpdateCurrentMesh();
 		RecalculateFaceCount();
-		SetUpdated(true);
+		SetUpdated(FACE_UPDATE);
+	}
+
+	uint32_t GetMaxFaceCount() {
+		return max_face_count;
 	}
 
 	void DecreaseQuality() {
@@ -512,7 +663,7 @@ public:
 
 		UpdateCurrentMesh();
 		RecalculateFaceCount();
-		SetUpdated(true);
+		SetUpdated(VERTEX_FACE_UPDATE);
 	}
 
 	void IncreaseQuality() {
@@ -545,7 +696,7 @@ public:
 
 		UpdateCurrentMesh();
 		RecalculateFaceCount();
-		SetUpdated(true);
+		SetUpdated(VERTEX_FACE_UPDATE);
 	}
 
 	void _SetParentStepRecursive(Cluster& source, float step) {
@@ -575,10 +726,19 @@ public:
 		}
 	}
 
-	void Update(float center_distance_from_camera) override {
-		lod_tree.FillFaceVert(center_distance_from_camera, clusters, faces, vertices);
+	void Update(float center_distance_from_camera, FaceBuffer* o_faces) override {
+		if (vertex_ownership == CLUSTER) {
+			lod_tree.FillFaceVert(center_distance_from_camera, clusters, faces, vertices);
+			SetUpdated(VERTEX_FACE_UPDATE);
+		}
+		else {
+			//lod_tree.FillFaces(center_distance_from_camera, clusters, faces);
+			//SetUpdated(FACE_UPDATE);
+			//std::cout << "Max face count: " << max_face_count << std::endl;
+			NaniteRenderer::GetInstance()->FillBuffer(this->cluster_buffer, this->face_buffer, o_faces, center_distance_from_camera);
+			SetUpdated(NO_UPDATE);
+		}
 		RecalculateFaceCount();
-		SetUpdated(true);
 		return;
 
 		std::vector<CLUSTER_ID> activate;
@@ -670,7 +830,7 @@ public:
 
 			UpdateCurrentMesh();
 			RecalculateFaceCount();
-			SetUpdated(true);
+			SetUpdated(VERTEX_FACE_UPDATE);
 		}
 	}
 
@@ -985,5 +1145,10 @@ public:
 		}
 
 		fclose(config_file);
+	}
+
+	~NaniteMesh() {
+		delete cluster_buffer;
+		delete face_buffer;
 	}
 };

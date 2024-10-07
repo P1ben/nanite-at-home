@@ -97,7 +97,7 @@ public:
 		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
 		Object3D temp_obj = Object3D();
 		temp_obj.SetOriginalMesh(mesh);
-		mesh->Update(.0f);
+		mesh->Update(.0f, nullptr);
 		temp_obj.SetShader(&shader);
 
 		Framebuffer fb = Framebuffer(2048, 2048);
