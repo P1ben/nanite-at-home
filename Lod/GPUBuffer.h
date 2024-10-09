@@ -115,6 +115,10 @@ public:
 		return faceBuffer;
 	}
 
+	VertexBuffer* GetVertexBuffer() {
+		return vertexBuffer;
+	}
+
 	uint32_t GetFaceCount() {
 		return faceBuffer->GetFaceCount();
 	}

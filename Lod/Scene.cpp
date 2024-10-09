@@ -5,6 +5,30 @@ void Scene::Update()
 	if (camera) {
 		const vec3& camera_pos = camera->GetWorldPosition();
 		for (auto obj : objects) {
+			if (!obj->IsQueuedForUpdate()) {
+				update_queue.Add(obj);
+				obj->QueueForUpdate();
+			}
+			//obj->UpdateMesh(camera_pos);
+		}
+
+		for (uint32_t i = 0; i < updates_per_frame; i++) {
+			Object3D* obj = update_queue.GetNext();
+			if (!obj) {
+				break;
+			}
+
+			obj->UpdateMesh(camera_pos);
+		}
+	}
+}
+
+void Scene::UpdateNow()
+{
+	if (camera) {
+		const vec3& camera_pos = camera->GetWorldPosition();
+		update_queue.Clear();
+		for (auto obj : objects) {
 			obj->UpdateMesh(camera_pos);
 		}
 	}
@@ -50,11 +74,13 @@ void Scene::RemoveObject(Object3D* object) {
 	auto it = std::find(objects.begin(), objects.end(), object);
 	if (it != objects.end()) {
 		objects.erase(it);
+		update_queue.Remove(object);
 	}
 }
 
 void Scene::ClearAll() {
 	objects.clear();
+	update_queue.Clear();
 }
 
 uint32_t Scene::GetVertexCount() {
@@ -112,5 +138,19 @@ void Scene::MoveCamera(float amount, const vec2& dir) {
 void Scene::SetCameraPosition(const vec3& pos) {
 	if (camera) {
 		camera->SetWorldPosition(pos);
+	}
+}
+
+void Scene::ToggleTrueColor() {
+	true_color_enabled = !true_color_enabled;
+	for (auto obj : objects) {
+		obj->SetTrueColor(true_color_enabled);
+	}
+}
+
+void Scene::ToggleWireframe() {
+	wireframe_enabled = !wireframe_enabled;
+	for (auto obj : objects) {
+		obj->SetWireframe(wireframe_enabled);
 	}
 }

@@ -7,6 +7,7 @@
 #include <igl/per_vertex_normals.h>
 #include "Vertex.h"
 #include "Compute/FaceBuffer.h"
+#include "Compute/VertexBuffer.h"
 
 enum UpdateType {
 	VERTEX_FACE_UPDATE,
@@ -33,7 +34,7 @@ public:
 		updated = _upd;
 	}
 
-	virtual void Update(float center_distance_from_camera, FaceBuffer* o_faces) = 0;
+	virtual void Update(float center_distance_from_camera, FaceBuffer* o_faces, VertexBuffer* o_vertex) = 0;
 
 	~Mesh() {
 	}

@@ -3,13 +3,18 @@
 #include "Quaternion.h"
 #include "Camera.h"
 #include "Object3D.h"
+#include "UpdateQueue.h"
 //#include "ThreadPool/ThreadPool.h"
 
 class Scene {
 private:
 	Camera*                camera = nullptr;
 	std::vector<Object3D*> objects;
-	//ThreadPool             thread_pool;
+	UpdateQueue            update_queue;
+	uint32_t               updates_per_frame  = 1;
+	bool                   true_color_enabled = false;
+	bool                   wireframe_enabled  = false;
+	//ThreadPool           thread_pool;
 
 public:
 	Scene();
@@ -24,6 +29,7 @@ public:
 	void SetFreezeViewMatrix(bool freeze);
 
 	void Update();
+	void UpdateNow();
 	//void UpdateAsync();
 	void Draw();
 
@@ -31,4 +37,6 @@ public:
 	void OrbitCamera(float rad, const vec2& axis);
 	void MoveCamera(float amount, const vec2& dir);
 	void SetCameraPosition(const vec3& pos);
+	void ToggleTrueColor();
+	void ToggleWireframe();
 };

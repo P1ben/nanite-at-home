@@ -29,6 +29,10 @@ public:
 		vertex_count = vertices.size();
 	}
 
+	void Resize(uint32_t vertex_count) {
+		ssbo->Resize(vertex_count * sizeof(Vertex));
+		vertex_count = vertex_count;
+	}
 
 	uint32_t GetVertexCount() {
 		return vertex_count;

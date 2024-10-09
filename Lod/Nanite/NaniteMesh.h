@@ -23,6 +23,7 @@ class NaniteMesh : public Mesh {
 
 	ClusterBuffer* cluster_buffer = nullptr;
 	FaceBuffer*    face_buffer    = nullptr;
+	VertexBuffer*  vertex_buffer  = nullptr;
 
 	// Current mesh
 	std::vector<Vertex> vertices;
@@ -322,7 +323,7 @@ class NaniteMesh : public Mesh {
 		//printf("\tParental problems: %d\n", parent_prob);
 	}
 
-	void CreateClusterBuffer() {
+	void CreateClusterBufferFaceBufferOnly() {
 		std::vector<ClusterData> cluster_data;
 		std::vector<Face>        faces;
 
@@ -333,6 +334,44 @@ class NaniteMesh : public Mesh {
 			faces.insert(faces.end(), face_data.begin(), face_data.end());
 			data.faces_length = clstr.GetFaces().size();
 			data.self_cutoff  = clstr.GetMetric();
+			//printf("Metrix: %f\n", clstr.GetMetric());
+			data.vertex_start  = 0;
+			data.vertex_length = 0;
+
+			if (clstr.GetRoot()) {
+				data.parental_cutoff = FLT_MAX;
+			}
+			else {
+				data.parental_cutoff = clusters[clstr.GetParents()[0]].GetMetric();
+			}
+
+			cluster_data.push_back(data);
+		}
+
+		face_buffer = new FaceBuffer(0);
+		face_buffer->ManualFill(faces);
+
+		cluster_buffer = new ClusterBuffer(cluster_data);
+	}
+
+	void CreateClusterBuffer() {
+		std::vector<ClusterData> cluster_data;
+		std::vector<Face>        faces;
+		std::vector<Vertex>      vertices;
+
+		for (auto& clstr : clusters) {
+			ClusterData data;
+			data.face_start = faces.size();
+			const auto& face_data = clstr.GetFaces();
+			faces.insert(faces.end(), face_data.begin(), face_data.end());
+			data.faces_length = face_data.size();
+
+			data.vertex_start = faces.size();
+			const auto& vertex_data = clstr.GetVertices();
+			vertices.insert(vertices.end(), vertex_data.begin(), vertex_data.end());
+			data.vertex_length = vertex_data.size();
+
+			data.self_cutoff = clstr.GetMetric();
 			//printf("Metrix: %f\n", clstr.GetMetric());
 
 			if (clstr.GetRoot()) {
@@ -347,6 +386,9 @@ class NaniteMesh : public Mesh {
 
 		face_buffer = new FaceBuffer(0);
 		face_buffer->ManualFill(faces);
+
+		vertex_buffer = new VertexBuffer();
+		vertex_buffer->ManualFill(vertices);
 
 		cluster_buffer = new ClusterBuffer(cluster_data);
 	}
@@ -582,8 +624,11 @@ public:
 		UpdateDensityForClusters();
 
 		if (vertex_ownership == MASTER) {
-			CreateClusterBuffer();
+			CreateClusterBufferFaceBufferOnly();
 		}
+		//else {
+		//	CreateClusterBuffer();
+		//}
 
 		faces.reserve(face_count);
 		vertices.reserve(face_count);
@@ -726,8 +771,9 @@ public:
 		}
 	}
 
-	void Update(float center_distance_from_camera, FaceBuffer* o_faces) override {
+	void Update(float center_distance_from_camera, FaceBuffer* o_faces, VertexBuffer* o_vertex) override {
 		if (vertex_ownership == CLUSTER) {
+			//NaniteRenderer::GetInstance()->FillBuffer(this->cluster_buffer, this->face_buffer, o_faces, this->vertex_buffer, o_vertex, center_distance_from_camera);
 			lod_tree.FillFaceVert(center_distance_from_camera, clusters, faces, vertices);
 			SetUpdated(VERTEX_FACE_UPDATE);
 		}

@@ -210,6 +210,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="Uniform\Object3DUniformBlock.h" />
     <ClInclude Include="Uniform\ToolsUniformBlock.h" />
     <ClInclude Include="Uniform\UniformBuffer.h" />
+    <ClInclude Include="UpdateQueue.h" />
     <ClInclude Include="VecLib\VecLib.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

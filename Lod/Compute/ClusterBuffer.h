@@ -7,6 +7,8 @@ struct ClusterData {
 
 	uint32_t face_start;
 	uint32_t faces_length;
+	uint32_t vertex_start;
+    uint32_t vertex_length;
 };
 
 class ClusterBuffer {

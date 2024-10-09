@@ -49,6 +49,8 @@ private:
 
 	bool wireFrameEnabled = false;
 
+	bool updateQueued = false;
+
 public:
 	Object3D() {
 		uniform_block = new Object3DUniformBlock();
@@ -184,15 +186,11 @@ public:
 		return buffer.GetFaceCount();
 	}
 
-	void EnableWireframe() {
-		wireFrameEnabled = true;
+	void SetWireframe(bool value) {
+		wireFrameEnabled = value;
 	}
 
-	void DisableWireframe() {
-		wireFrameEnabled = false;
-	}
-
-	void SwitchWireframe() {
+	void ToggleWireframe() {
 		wireFrameEnabled = !wireFrameEnabled;
 	}
 
@@ -236,6 +234,14 @@ public:
 		RecalculateModelMatrix();
 	}
 
+	bool IsQueuedForUpdate() {
+		return updateQueued;
+	}
+
+	void QueueForUpdate() {
+		updateQueued = true;
+	}
+
 	vec3& GetDrawColor() {
 		return drawColor;
 	}
@@ -243,6 +249,11 @@ public:
 	void ToggleTrueColor() {
 		useTrueColor = !useTrueColor;
 		uniform_block->SetUseTrueColor(useTrueColor);
+	}
+
+	void SetTrueColor(bool value) {
+		useTrueColor = value;
+		uniform_block->SetUseTrueColor(value);
 	}
 
 	void AttachColorMap(ColorMap* colorMap) {
@@ -282,9 +293,10 @@ public:
 	}
 
 	void UpdateMesh(const vec3& camera_pos) {
+		updateQueued = false;
 		float new_distance = length(camera_pos - worldPosition);
 		if (current_mesh && new_distance != distance_from_camera) {
-			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer());
+			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer(), buffer.GetVertexBuffer());
 			distance_from_camera = new_distance;
 		}
 
@@ -304,7 +316,7 @@ public:
 	void UpdateMeshNoRefill(const vec3& camera_pos) {
 		float new_distance = length(camera_pos - worldPosition);
 		if (current_mesh && new_distance != distance_from_camera) {
-			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer());
+			current_mesh->Update(length(camera_pos - worldPosition), buffer.GetFaceBuffer(), buffer.GetVertexBuffer());
 			distance_from_camera = new_distance;
 		}
 	}

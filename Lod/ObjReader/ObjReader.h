@@ -242,7 +242,7 @@ private:
 	}
 
 	// TODO: Refactor this
-	static StaticMesh* CreateMesh(const std::vector<vec3>& vertices, const std::vector<vec3>& normals, const std::vector<vec2>& tex_coords, const std::vector<ObjFace>& faces) {
+	static StaticMesh* CreateMesh(const std::vector<vec3>& vertices, const std::vector<vec3>& normals, const std::vector<vec2>& tex_coords, const std::vector<ObjFace>& faces, bool vertex_filtering = false) {
 		std::unordered_map<Vertex, int> VertexMap;
 		std::vector<Vertex> Vertices;
 		std::vector<Face>   Faces;
@@ -333,12 +333,19 @@ private:
 				}
 			}
 
-			bool found  = false;
-			int  index1 = insert_into_vertices(v1);
-			int  index2 = insert_into_vertices(v2);
-			int  index3 = insert_into_vertices(v3);
+			if (vertex_filtering) {
+				Vertices.push_back(v1);
+				Vertices.push_back(v2);
+				Vertices.push_back(v3);
+				Faces.push_back(Face(Vertices.size() - 3, Vertices.size() - 2, Vertices.size() - 1));
+			}
+			else {
+				int  index1 = insert_into_vertices(v1);
+				int  index2 = insert_into_vertices(v2);
+				int  index3 = insert_into_vertices(v3);
 
-			Faces.push_back(Face(index1, index2, index3));
+				Faces.push_back(Face(index1, index2, index3));
+			}
 		}
 
 		return new StaticMesh(Vertices, Faces);
@@ -487,7 +494,7 @@ private:
 	}
 
 public:
-	static StaticMesh* ReadObj(const char* file_name) {
+	static StaticMesh* ReadObj(const char* file_name, bool vertex_filtering = false) {
 		std::ifstream file(file_name);
 		std::string s;
 		uint32_t line_number = 1;
@@ -541,7 +548,7 @@ public:
 			}
 			line_number++;
 		}
-		return CreateMesh(vertices, normals, tex_coords, faces);
+		return CreateMesh(vertices, normals, tex_coords, faces, vertex_filtering);
 	}
 
 	static void ZipNaniteMesh(const std::string& folder_path) {
@@ -718,6 +725,7 @@ public:
 		file.close();
 	}
 
+	// Reads a zipped nanite mesh and returns the vertices and faces, the vertices will be contained in the mesh
 	static void ReadZippedNaniteMesh(const std::string& file_path, std::vector<Vertex>& vertex_out, std::vector<std::vector<Face>>& cluster_face_out) {
 		std::vector<vec3>    vertices;
 		std::vector<vec3>    normals;
@@ -784,6 +792,89 @@ public:
 		}
 
 		for (const auto& cluster : faces) {
+			vec3 rand_color = vec3((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX);
+			std::vector<Face> cluster_faces;
+			for (const auto& face : cluster) {
+				Face f;
+				f.a = face.v1 - 1;
+				f.b = face.v2 - 1;
+				f.c = face.v3 - 1;
+				cluster_faces.push_back(f);
+			}
+			cluster_face_out.push_back(cluster_faces);
+		}
+	}
+
+	// Reads a zipped nanite mesh and returns the vertices and faces, the vertices will be contained in the clusters
+	static void ReadZippedNaniteMesh(const std::string& file_path, std::vector<std::vector<Vertex>>& cluster_vertex_out, std::vector<std::vector<Face>>& cluster_face_out) {
+		std::vector<vec3>    vertices;
+		std::vector<vec3>    normals;
+		std::vector<vec2>    tex_coords;
+		std::vector<std::vector<ObjFace>> faces;
+		std::ifstream file(file_path);
+
+		std::string s;
+		uint32_t line_number = 1;
+
+		TokenList line_tokens;
+		line_tokens.reserve(5);
+
+		while (getline(file, s)) {
+			line_tokens.clear();
+
+			// Fill line_tokens with line tokens
+			TokenizeLine(s, line_tokens, ' ');
+			ObjLineType line_type = GetLineType(line_tokens);
+
+			switch (line_type) {
+			case ObjLineType::VERTEX:
+				vertices.push_back(ObjReader::ParseVertex(line_tokens));
+				break;
+			case ObjLineType::FACE:
+				if (line_tokens.size() > 4) {
+					std::vector<ObjFace> faces_temp = ObjReader::ParseFaceList(line_tokens);
+					for (ObjFace& face : faces_temp) {
+						if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+							faces.back().push_back(face);
+						}
+					}
+				}
+				else {
+					ObjFace face = ObjReader::ParseFace(line_tokens, 0, 0, 0);
+					if (face.type != FaceType::UNKNOWN_FACE_TYPE) {
+						faces.back().push_back(face);
+					}
+				}
+				break;
+			case ObjLineType::TEXTURE:
+				tex_coords.push_back(ObjReader::ParseTexCoord(line_tokens));
+				break;
+			case ObjLineType::NORMAL:
+				normals.push_back(ObjReader::ParseNormal(line_tokens));
+				break;
+			case ObjLineType::CLUSTER_SEPARATOR:
+				faces.push_back(std::vector<ObjFace>());
+				break;
+				// Handle unknown line types
+			case ObjLineType::UNKNOWN:
+			default:
+				std::cout << "WARNING:: ObjReader found a problem on line " << line_number << " in file " << file_path << std::endl;
+			}
+			line_number++;
+		}
+
+		std::vector<Vertex> Vertices;
+		Vertices.reserve(vertices.size());
+		for (int i = 0; i < vertices.size(); i++) {
+			Vertex v;
+			v.position = vertices[i];
+			v.normal = normals[i];
+			v.uv = tex_coords[i];
+			Vertices.push_back(v);
+		}
+
+		for (const auto& cluster : faces) {
+			vec3 rand_color = vec3((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX);
 			std::vector<Face> cluster_faces;
 			for (const auto& face : cluster) {
 				Face f;

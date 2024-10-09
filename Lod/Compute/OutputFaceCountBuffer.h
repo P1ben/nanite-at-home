@@ -1,12 +1,12 @@
 #pragma once
 #include "SSBO.h"
 
-class OutputFaceCountBuffer {
+class UintBuffer {
 private:
 	SSBO* ssbo;
 
 public:
-	OutputFaceCountBuffer() {
+	UintBuffer() {
 		ssbo = new SSBO(sizeof(uint32_t));
 	}
 
@@ -18,7 +18,7 @@ public:
 		ssbo->Bind();
 	}
 
-	uint32_t GetFaceCount() {
+	uint32_t GetVal() {
 		uint32_t return_val;
 		ssbo->ReadData(0, sizeof(uint32_t), &return_val);
 		return return_val;
@@ -29,7 +29,7 @@ public:
 		ssbo->WriteData(0, sizeof(uint32_t), &zero);
 	}
 
-	~OutputFaceCountBuffer() {
+	~UintBuffer() {
 		delete ssbo;
 	}
 };

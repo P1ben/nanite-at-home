@@ -284,8 +284,8 @@ void Initialization() {
     //printf("Done\n");
     /////////////////////////////////////////////////////////////
 
-    //Decimator2::CreateNaniteMesh("vase.obj", "vase_nanite");
-    //printf("Done");
+    Decimator2::CreateNaniteMesh("chair.obj", "chair_nanite");
+    printf("Done");
     //lod_meshes.push_back(ObjReader::ReadObj("dino.obj"));
 
     ////// Render loaded mesh /////////
@@ -539,6 +539,35 @@ bool camera_frozen = false;
 
 FPSCounter fps_counter;
 
+// Benchmark settings
+
+static constexpr int BENCHMARK_STATIONARY_SAMPLE_TIME  = 2;
+static constexpr int BENCHMARK_UNIVERSAL_COPY_COUNT    = 40;
+static constexpr int BENCHMARK_UNIVERSAL_COPY_DISTANCE = 1;
+static constexpr int BENCHMARK_MOVING_ANIMATION_TIME   = 10;
+
+std::vector<std::string> GetBenchmarkSettings() {
+	std::vector<std::string> settings;
+	settings.push_back("Stationary sample time: " + std::to_string(BENCHMARK_STATIONARY_SAMPLE_TIME) + " s");
+	settings.push_back("Universal copy count: " + std::to_string(BENCHMARK_UNIVERSAL_COPY_COUNT));
+	settings.push_back("Universal copy distance: " + std::to_string(BENCHMARK_UNIVERSAL_COPY_DISTANCE));
+    settings.push_back("Moving animation time: " + std::to_string(BENCHMARK_MOVING_ANIMATION_TIME) + " s");
+	settings.push_back("Number of distances: " + std::to_string(distances.size()));
+	return settings;
+}
+
+void SaveEnvironmentInfo(const std::string& folder_name) {
+    auto sys_info = Benchmark::GetSysInfo();
+    auto benchmark_settings = GetBenchmarkSettings();
+
+    std::vector<std::string> all_settings;
+    all_settings.insert(all_settings.end(), sys_info.begin(), sys_info.end());
+    all_settings.insert(all_settings.end(), benchmark_settings.begin(), benchmark_settings.end());
+
+    std::ofstream info_file(std::string("benchmarks\\") + folder_name + "\\env_info.txt");
+    for (const auto& e : all_settings) info_file << e << "\n";
+}
+
 /* Our program's entry point */
 int main(int argc, char* argv[])
 {
@@ -667,11 +696,11 @@ int main(int argc, char* argv[])
         }
 
         if (ImGui::Button("Toggle Wireframe")) {
-            nanite_obj->SwitchWireframe();
+            scene->ToggleWireframe();
         }
 
         if (ImGui::Button("Toggle TrueColor")) {
-            nanite_obj->ToggleTrueColor();
+            scene->ToggleTrueColor();
         }
 
         if (ImGui::Button("Increase Quality")) {
@@ -735,22 +764,30 @@ int main(int argc, char* argv[])
         ImGui::Text("Last Frame Time (ms):");
         ImGui::Text(std::to_string(fps_counter.GetLastFrametime()).c_str());
         if (ImGui::Button("Start Stationary FPS Benchmark")) {
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1);
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_STATIONARY_SAMPLE_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE);
         }
 
         if (ImGui::Button("Start Moving FPS Benchmark")) {
-            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances, 20, 1);
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_MOVING_ANIMATION_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE);
         }
 
         if (ImGui::Button("Start Image Difference Benchmark")) {
-            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, 20, 1);
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE);
+        }
+
+        if (ImGui::Button("Start Performance Benchmark")) {
+            std::string date_str = Timer::GetCurrentTimeStr();
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_STATIONARY_SAMPLE_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE, date_str.c_str());
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_MOVING_ANIMATION_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE, date_str.c_str());
+            SaveEnvironmentInfo(date_str);
         }
 
         if (ImGui::Button("Start Combined Benchmark")) {
             std::string date_str = Timer::GetCurrentTimeStr();
-            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, 6, distances, 20, 1, date_str.c_str());
-            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, 20, 1, date_str.c_str());
-            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, 10, distances, 20, 1, date_str.c_str());
+            Benchmark::StationaryFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_STATIONARY_SAMPLE_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE, date_str.c_str());
+            Benchmark::ImageDifferenceBenchmark(nanite_obj, reference_obj, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE, date_str.c_str());
+            Benchmark::MovingFPSBenchmark(window, nanite_obj, reference_obj, BENCHMARK_MOVING_ANIMATION_TIME, distances, BENCHMARK_UNIVERSAL_COPY_COUNT, BENCHMARK_UNIVERSAL_COPY_DISTANCE, date_str.c_str());
+            SaveEnvironmentInfo(date_str);
         }
 
         ImGui::End();

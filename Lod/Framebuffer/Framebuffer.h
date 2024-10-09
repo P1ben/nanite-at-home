@@ -97,7 +97,7 @@ public:
 		//Shader shader = Shader("shaders/maxblinn-vx.glsl", "shaders/maxblinn-fg.glsl");
 		Object3D temp_obj = Object3D();
 		temp_obj.SetOriginalMesh(mesh);
-		mesh->Update(.0f, nullptr);
+		mesh->Update(.0f, nullptr, nullptr);
 		temp_obj.SetShader(&shader);
 
 		Framebuffer fb = Framebuffer(2048, 2048);
@@ -132,7 +132,7 @@ public:
 
 		object->SetShader(&shader);
 		object->SetDrawColor(vec3(0.3f, 0.3f, 0.3f));
-		object->EnableWireframe();
+		object->SetWireframe(true);
 
 		Framebuffer fb = Framebuffer(2048, 2048);
 		fb.Use();
@@ -141,7 +141,7 @@ public:
 
 		object->SetShader(remember);
 		object->SetDrawColor(orig_draw_color);
-		object->DisableWireframe();
+		object->SetWireframe(false);
 
 		fb.Save(file_path, true);
 		Framebuffer::UseDefault();
@@ -154,7 +154,7 @@ public:
 		temp_obj.SetOriginalMesh(mesh);
 		temp_obj.SetShader(&shader);
 		temp_obj.SetDrawColor(vec3(0.3f, 0.3f, 0.3f));
-		temp_obj.EnableWireframe();
+		temp_obj.SetWireframe(true);
 
 		Framebuffer fb = Framebuffer(1024, 1024);
 		fb.Use();

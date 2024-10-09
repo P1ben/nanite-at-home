@@ -240,7 +240,7 @@ public:
 		return area;
 	}
 
-	void Update(float center_distance_from_camera, FaceBuffer* o_faces) override {
+	void Update(float center_distance_from_camera, FaceBuffer* o_faces, VertexBuffer* o_vertex) override {
 		return;
 	}
 

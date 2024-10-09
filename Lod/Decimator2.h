@@ -204,7 +204,7 @@ public:
 
 	static void CreateNaniteMesh(std::string input_mesh_path, std::string output_mesh_path) {
 		//humanoid_mesh = new StaticMesh(input_mesh_path);
-		Decimator2 dm2(ObjReader::ReadObj(input_mesh_path.c_str()));
+		Decimator2 dm2(ObjReader::ReadObj(input_mesh_path.c_str(), true));
 
 		StaticMesh* temp_mesh = dm2.ConvertToStaticMesh();
 		Framebuffer::CreateObjNormalMap(temp_mesh, (output_mesh_path + "\\normals.jpg").c_str());
@@ -224,6 +224,10 @@ public:
 
 		PRINT_TIME_TAKEN("Saving Nanite Mesh:", {
 			nanite_mesh->Save(output_mesh_path);
+		})
+
+		PRINT_TIME_TAKEN("Zipping Nanite Mesh:", {
+			ObjReader::ZipNaniteMesh(output_mesh_path);
 		})
 
 		delete nanite_mesh;

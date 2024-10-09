@@ -21,6 +21,15 @@ private:
 	}
 public:
 
+	static std::vector<std::string> GetSysInfo() {
+		std::vector<std::string> sys_info;
+		sys_info.push_back("CPU: " + std::to_string(SDL_GetCPUCount()) + " cores");
+		sys_info.push_back("RAM: " + std::to_string(SDL_GetSystemRAM()) + " MB");
+		sys_info.push_back("GPU: " + std::string((const char*)glGetString(GL_RENDERER)));
+		sys_info.push_back("OpenGL Version: " + std::string((const char*)glGetString(GL_VERSION)));
+		return sys_info;
+	}
+
 	static void StationaryFPSBenchmark(SDL_Window*        window,
 									   Object3D*          nanite_obj,
 									   Object3D*          original_obj,
@@ -70,6 +79,7 @@ public:
 			timer.Start(sample_time);
 			while (!timer.IsFinished()) {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				test_scene.Update();
 				test_scene.Draw();
 				SDL_GL_SwapWindow(window);
 				fps_counter.Update();
@@ -111,6 +121,7 @@ public:
 			timer.Start(sample_time);
 			while (!timer.IsFinished()) {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				test_scene.Update();
 				test_scene.Draw();
 				SDL_GL_SwapWindow(window);
 				fps_counter.Update();
@@ -387,13 +398,13 @@ public:
 		std::cout << "Starting Nanite benchmark" << std::endl;
 		for (float dist : distances) {
 			test_scene.SetCameraPosition(vec3(dist, 0, 0));
-			test_scene.Update();
+			test_scene.UpdateNow();
 			std::string result_file = folder + "\\" + "nanite_" + std::to_string(dist) + ".png";
 			
 			Framebuffer::RenderOntoImage(&test_scene, result_file.c_str(), img_w, img_h);
 			Mesh* nanite_mesh = nanite_obj->GetMesh();
-			nanite_mesh_triangle_count.push_back(nanite_mesh->GetFaceCount());
-			nanite_mesh_vertex_count.push_back(nanite_mesh->GetVertices().size());
+			nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+			nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
 			std::cout << "\tSaved result to: " << result_file << std::endl;
 		}
 
@@ -417,13 +428,13 @@ public:
 		std::cout << "Starting Reference benchmark" << std::endl;
 		for (float dist : distances) {
 			test_scene.SetCameraPosition(vec3(dist, 0, 0));
-			test_scene.Update();
+			test_scene.UpdateNow();
 			std::string result_file = folder + "\\" + "reference_" + std::to_string(dist) + ".png";
 
 			Framebuffer::RenderOntoImage(&test_scene, result_file.c_str(), img_w, img_h);
 			Mesh* original_mesh = original_obj->GetMesh();
-			original_mesh_triangle_count.push_back(original_mesh->GetFaceCount());
-			original_mesh_vertex_count.push_back(original_mesh->GetVertices().size());
+			original_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+			original_mesh_vertex_count.push_back(test_scene.GetVertexCount());
 			std::cout << "\tSaved result to: " << result_file << std::endl;
 		}
 
