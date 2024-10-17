@@ -17,6 +17,7 @@ private:
 		TEXTURE,
 		NORMAL,
 		CLUSTER_SEPARATOR,
+		COMMENT,
 		UNKNOWN,
 	};
 
@@ -75,6 +76,9 @@ private:
 		}
 		else if (line_tokens[0] == "new_cluster") {
 			return ObjLineType::CLUSTER_SEPARATOR;
+		}
+		else if (line_tokens[0][0] == '#'){
+			return ObjLineType::COMMENT;
 		}
 		else {
 			return ObjLineType::UNKNOWN;
@@ -333,7 +337,7 @@ private:
 				}
 			}
 
-			if (vertex_filtering) {
+			if (!vertex_filtering) {
 				Vertices.push_back(v1);
 				Vertices.push_back(v2);
 				Vertices.push_back(v3);
@@ -347,7 +351,6 @@ private:
 				Faces.push_back(Face(index1, index2, index3));
 			}
 		}
-
 		return new StaticMesh(Vertices, Faces);
 	}
 
@@ -540,7 +543,8 @@ public:
 			case ObjLineType::NORMAL:
 				normals.push_back(ObjReader::ParseNormal(line_tokens));
 				break;
-
+			case ObjLineType::COMMENT:
+				break;
 			// Handle unknown line types
 			case ObjLineType::UNKNOWN:
 			default:
@@ -618,7 +622,8 @@ public:
 				case ObjLineType::NORMAL:
 					normals.push_back(ObjReader::ParseNormal(line_tokens));
 					break;
-
+				case ObjLineType::COMMENT:
+					break;
 					// Handle unknown line types
 				case ObjLineType::UNKNOWN:
 				default:
@@ -679,7 +684,8 @@ public:
 			case ObjLineType::NORMAL:
 				output_file << s << std::endl;
 				break;
-
+			case ObjLineType::COMMENT:
+				break;
 				// Handle unknown line types
 			case ObjLineType::UNKNOWN:
 			default:
@@ -775,6 +781,8 @@ public:
 			case ObjLineType::CLUSTER_SEPARATOR:
 				faces.push_back(std::vector<ObjFace>());
 				break;
+			case ObjLineType::COMMENT:
+				break;
 			// Handle unknown line types
 			case ObjLineType::UNKNOWN:
 			default:
@@ -854,6 +862,8 @@ public:
 				break;
 			case ObjLineType::CLUSTER_SEPARATOR:
 				faces.push_back(std::vector<ObjFace>());
+				break;
+			case ObjLineType::COMMENT:
 				break;
 				// Handle unknown line types
 			case ObjLineType::UNKNOWN:

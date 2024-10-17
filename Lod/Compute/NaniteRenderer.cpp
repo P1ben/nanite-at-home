@@ -35,11 +35,12 @@ void NaniteRenderer::FillBuffer(ClusterBuffer* i_cluster, FaceBuffer* i_faces, F
 	counterShader->Dispatch(i_cluster->GetClusterCount(), 1, 1);
 
 	uint32_t expected_face_count = outputFaceCountBuffer->GetVal();
+	//printf("%u\n", expected_face_count);
 
 	o_faces->Resize(expected_face_count);
 
 	outputFaceCountBuffer->Reset();
-	o_faces->Bind();
+	//o_faces->Bind();
 
 	computeShader->Use();
 	computeShader->Dispatch(i_cluster->GetClusterCount(), 1, 1);
@@ -50,7 +51,7 @@ void NaniteRenderer::FillBuffer(ClusterBuffer* i_cluster, FaceBuffer* i_faces, F
 	//}
 	//computeShader->Dispatch(2, 1, 1);
 	o_faces->SetFaceCount(outputFaceCountBuffer->GetVal());
-
+	//printf("%u\n", outputFaceCountBuffer->GetVal());
 	//o_faces->Bind();
 	//GLuint ssboSize;
 	//glGetBufferParameteriv(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE, (GLint*)&ssboSize);

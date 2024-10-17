@@ -189,6 +189,10 @@ public:
 	{
 		std::vector<float> nanite_fps;
 		std::vector<float> original_fps;
+		std::vector<uint32_t> nanite_mesh_triangle_count;
+		std::vector<uint32_t> original_mesh_triangle_count;
+		std::vector<uint32_t> nanite_mesh_vertex_count;
+		std::vector<uint32_t> original_mesh_vertex_count;
 
 		float start_dist = distances.front();
 		float end_dist   = distances.back();
@@ -219,7 +223,7 @@ public:
 		std::cout << "Starting Nanite benchmark" << std::endl;
 		float current_camera_x = start_dist;
 		test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
-		test_scene.Update();
+		test_scene.UpdateNow();
 
 		// init draw call so the buffer gets filled
 		test_scene.Draw();
@@ -238,18 +242,20 @@ public:
 			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
 			test_scene.Update();
 			fps_counter.Update();
-			if (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
+			while (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
 				nanite_fps.push_back(fps_counter.GetFPSAvg());
+				nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+				nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
 				fps_counter.Reset();
 				checkpoint++;
 			}
 		}
 		//nanite_fps.push_back(fps_counter.GetFPSAvg());
+		//nanite_fps.push_back(fps_counter.GetFPSAvg());
 		//Mesh* nanite_mesh = nanite_obj->GetMesh();
 		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
 		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
 		//std::cout << "\tNanite FPS at distance " << dist << " is " << nanite_fps.back() << std::endl;
-		fps_counter.Reset();
 
 		test_scene.ClearAll();
 
@@ -274,11 +280,12 @@ public:
 		std::cout << "Starting Reference benchmark" << std::endl;
 		current_camera_x = start_dist;
 		test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
-		test_scene.Update();
+		test_scene.UpdateNow();
 
 		// init draw call so the buffer gets filled
 		test_scene.Draw();
-		fps_counter.Start();
+		FPSCounter fps_counter2;
+		fps_counter2.Start();
 		timer.Start(animation_time);
 		timer.SavePoint();
 		checkpoint = 1;
@@ -290,19 +297,24 @@ public:
 			timer.SavePoint();
 			test_scene.SetCameraPosition(vec3(current_camera_x, 0, 0));
 			test_scene.Update();
-			fps_counter.Update();
-			if (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
-				original_fps.push_back(fps_counter.GetFPSAvg());
-				fps_counter.Reset();
+			fps_counter2.Update();
+			while (checkpoint < distances.size() && current_camera_x >= distances[checkpoint]) {
+				original_fps.push_back(fps_counter2.GetFPSAvg());
+				original_mesh_triangle_count.push_back(test_scene.GetFaceCount());
+				original_mesh_vertex_count.push_back(test_scene.GetVertexCount());
+				fps_counter2.Reset();
 				checkpoint++;
 			}
 		}
+		//original_fps.push_back(fps_counter2.GetFPSAvg());
 		//original_fps.push_back(fps_counter.GetFPSAvg());
 		//Mesh* nanite_mesh = nanite_obj->GetMesh();
 		//nanite_mesh_triangle_count.push_back(test_scene.GetFaceCount());
 		//nanite_mesh_vertex_count.push_back(test_scene.GetVertexCount());
 		//std::cout << "\tNanite FPS at distance " << dist << " is " << nanite_fps.back() << std::endl;
-		fps_counter.Reset();
+		fps_counter2.Reset();
+
+		test_scene.ClearAll();
 
 		for (auto* obj : reference_objs) {
 			delete obj;
@@ -328,20 +340,20 @@ public:
 		data.push_back({ "Distance",
 						 "Nanite FPS",
 						 "Reference FPS",
-						 //"Nanite Triangle Count",
-						 //"Reference Triangle Count",
-						 //"Nanite Vertex Count",
-						 //"Reference Vertex Count",
+						 "Nanite Triangle Count",
+						 "Reference Triangle Count",
+						 "Nanite Vertex Count",
+						 "Reference Vertex Count",
 			});
 
 		for (int i = 0; i < distances.size() - 2; i++) {
-			data.push_back({ std::to_string(distances[i + 1]),
-							 std::to_string(nanite_fps[i]),
-							 std::to_string(original_fps[i]),
-							 //std::to_string(nanite_mesh_triangle_count[i]),
-							 //std::to_string(original_mesh_triangle_count[i]),
-							 //std::to_string(nanite_mesh_vertex_count[i]),
-							 //std::to_string(original_mesh_vertex_count[i]),
+							 data.push_back({std::to_string(distances[i + 1]),
+							 (nanite_fps.size() > i ? std::to_string(nanite_fps[i]) : "NA"),
+							 (original_fps.size() > i ? std::to_string(original_fps[i]) : "NA"),
+							 std::to_string(nanite_mesh_triangle_count[i]),
+							 std::to_string(original_mesh_triangle_count[i]),
+							 std::to_string(nanite_mesh_vertex_count[i]),
+							 std::to_string(original_mesh_vertex_count[i]),
 				});
 		}
 

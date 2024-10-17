@@ -73,7 +73,8 @@ void Camera::RecalculateProjectionMatrix() { // projection matrix
 
 void Camera::SetWorldPosition(const vec3& pos) {
 	worldPosition = pos;
-	uniform_block->SetCameraPosition(worldPosition);
+	if (!freezeViewMatrix)
+		uniform_block->SetCameraPosition(worldPosition);
 	RecalculateViewMatrix();
 }
 

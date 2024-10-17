@@ -37,6 +37,7 @@ public:
 	void OrbitCamera(float rad, const vec2& axis);
 	void MoveCamera(float amount, const vec2& dir);
 	void SetCameraPosition(const vec3& pos);
+	vec3 GetCameraPosition();
 	void ToggleTrueColor();
 	void ToggleWireframe();
 };

@@ -36,6 +36,6 @@ public:
 
 	virtual void Update(float center_distance_from_camera, FaceBuffer* o_faces, VertexBuffer* o_vertex) = 0;
 
-	~Mesh() {
+	virtual ~Mesh() {
 	}
 };

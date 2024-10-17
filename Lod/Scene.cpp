@@ -67,6 +67,10 @@ void Scene::SetCamera(const vec3& pos, const vec3& target, const vec3& up_dir, f
 }
 
 void Scene::AddObject(Object3D* object) {
+	if (!object) {
+		printf("Tried to add a null object to the scene.\n");
+		return;
+	}
 	objects.push_back(object);
 }
 
@@ -139,6 +143,14 @@ void Scene::SetCameraPosition(const vec3& pos) {
 	if (camera) {
 		camera->SetWorldPosition(pos);
 	}
+}
+
+vec3 Scene::GetCameraPosition()
+{
+	if (camera) {
+		return camera->GetWorldPosition();
+	}
+	return vec3(0.0f);
 }
 
 void Scene::ToggleTrueColor() {

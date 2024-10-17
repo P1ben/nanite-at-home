@@ -76,8 +76,10 @@ public:
 	};
 
 	StaticMesh(std::vector<Vertex>& _vertices, std::vector<Face>& _faces) {
-		vertices = std::vector<Vertex>(_vertices);
-		faces = std::vector<Face>(_faces);
+		/*vertices = std::vector<Vertex>(_vertices);
+		faces = std::vector<Face>(_faces);*/
+		vertices = _vertices;
+		faces = _faces;
 		this->SetUpdated(VERTEX_FACE_UPDATE);
 	};
 
@@ -245,5 +247,7 @@ public:
 	}
 
 	~StaticMesh() {
+		vertices.clear();
+		faces.clear();
 	}
 };

@@ -232,7 +232,7 @@ class NaniteMesh : public Mesh {
 					cluster.SetChildsibDensity(triangle_count / area_sum);
 					//cluster.SetChildsibDensity(triangle_count / area_sum);
 
-					cluster.PrintDensity();
+					//cluster.PrintDensity();
 					counter++;
 				}
 			}
@@ -404,6 +404,7 @@ public:
 		for (int i = 0; i < clusters.size(); i++) {
 			clusters[i].SetId(cluster_count++);
 			clusters[i].SetLeaf(true);
+			clusters[i].RequestVertexMapping();
 		}
 
 		printf("-Partitioning mesh-\n");
@@ -899,6 +900,11 @@ public:
 		printf("-Grouping clusters-\n");
 
 		std::vector<Cluster> clstrs = std::vector<Cluster>(group_count);
+
+		for (int i = 0; i < clstrs.size(); i++) {
+			clstrs[i].RequestVertexMapping();
+		}
+
 		std::vector<idx_t> partitions = GraphPartitioner::PartitionClusterArray(clusters, 0, group_count);
 
 		for (int i = 0; i < partitions.size(); i++) {
@@ -927,6 +933,7 @@ public:
 
 		for (int i = 0; i < clstrs.size(); i++) {
 			clstrs[i].SetId(i);
+			clstrs[i].RequestVertexMapping();
 		}
 
 		std::vector<idx_t> partitions = GraphPartitioner::PartitionClusterArray(clusters, start_index, group_count);
@@ -985,6 +992,10 @@ public:
 			// Setting error for new clusters
 			clusters[cli_a].SetError(clstr.GetError());
 			clusters[cli_b].SetError(clstr.GetError());
+
+			// Requesting vertex mapping for new clusters
+			clusters[cli_a].RequestVertexMapping();
+			clusters[cli_b].RequestVertexMapping();
 
 			OMesh& cl_mesh = clstr.GetInnerMesh();
 
@@ -1196,5 +1207,6 @@ public:
 	~NaniteMesh() {
 		delete cluster_buffer;
 		delete face_buffer;
+		delete vertex_buffer;
 	}
 };

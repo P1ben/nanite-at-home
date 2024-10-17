@@ -181,8 +181,8 @@ public:
 			}
 		}
 		cluster_mesh.garbage_collection();
-		std::cout << "Remaining faces: " << cluster_mesh.n_faces() << std::endl;
-		std::cout << "Stop cause: " << (edges_set.size() == 0 ? "No more edges to remove" : "Max faces reached") << std::endl;
+		//std::cout << "Remaining faces: " << cluster_mesh.n_faces() << std::endl;
+		//std::cout << "Stop cause: " << (edges_set.size() == 0 ? "No more edges to remove" : "Max faces reached") << std::endl;
 		return introduced_error;
 	}
 

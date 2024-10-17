@@ -123,7 +123,7 @@ public:
 
 		nanite_mesh = new NaniteMesh(folder_path);
 
-		nanite_mesh->SetChangeStepForClusters(10.2312423f);
+		//nanite_mesh->SetChangeStepForClusters(10.2312423f);
 
 		object->SetOriginalMesh(nanite_mesh);
 		return object;
@@ -366,6 +366,20 @@ public:
 				uniform_block->SetDrawColor(drawColor);
 			}
 
+		}
+	}
+
+	void Destroy() {
+		if (current_mesh) {
+			delete current_mesh;
+		}
+
+		if (colorTexture) {
+			delete colorTexture;
+		}
+
+		if (objectSpaceNormalTexture) {
+			delete objectSpaceNormalTexture;
 		}
 	}
 
