@@ -41,11 +41,46 @@ class Cluster {
 
 	vec3 color;
 
+	std::unordered_map<Vertex, OMesh::VertexHandle> vertex_map;
+	bool use_vertex_map = false;
 
+	OMesh::VertexHandle CopyVertexNoDuplMapped(const Vertex& vertex) {
+		// Check if the number is already in the map
+		if (vertex_map.find(vertex) != vertex_map.end()) {
+			return vertex_map[vertex]; // Return the index if found
+		}
+
+		// If not found, insert the number into the vector
+		vec3 pos  = vertex.position;
+		vec3 norm = vertex.normal;
+		vec2 tex  = vertex.uv;
+
+		OMesh::Point new_vert = OMesh::Point(pos.x, pos.y, pos.z);
+		OMesh::Normal new_normal = OMesh::Normal(norm.x, norm.y, norm.z);
+		OMesh::TexCoord2D new_tex = OMesh::TexCoord2D(tex.x, tex.y);
+
+		OMesh::VertexHandle vh_n = inner_mesh.add_vertex(new_vert);
+		inner_mesh.set_normal(vh_n, new_normal);
+		inner_mesh.set_texcoord2D(vh_n, new_tex);
+
+		// Store the index of the number in the map
+		vertex_map[vertex] = vh_n;
+
+		return vh_n; // Return the new index
+	}
 
 	// Copies vertex into inner mesh, checking for duplicate entries
 	// Returns the handle of the added vertex
 	OMesh::VertexHandle CopyVertexNoDupl(const OMesh& mesh, OMesh::VertexHandle vh) {
+		if (use_vertex_map) {
+			OMesh::Point new_vert = mesh.point(vh);
+			OMesh::Normal new_normal = mesh.normal(vh);
+			OMesh::TexCoord2D new_tex = mesh.texcoord2D(vh);
+
+			Vertex vert = Vertex(vec3(new_vert[0], new_vert[1], new_vert[2]), vec3(new_normal[0], new_normal[1], new_normal[2]), vec3(0, 0, 0), vec2(new_tex[0], new_tex[1]));
+			return CopyVertexNoDuplMapped(vert);
+		}
+
 		for (OMesh::VertexIter v_it = inner_mesh.vertices_begin(); v_it != inner_mesh.vertices_end(); ++v_it) {
 			if (inner_mesh.point(*v_it) == mesh.point(vh) && inner_mesh.texcoord2D(*v_it) == mesh.texcoord2D(vh))
 				return *v_it;
@@ -95,6 +130,22 @@ public:
 		//}
 	}
 
+	void RequestVertexMapping() {
+		if (use_vertex_map) {
+			return;
+		}
+
+		for (OMesh::VertexIter v_it = inner_mesh.vertices_begin(); v_it != inner_mesh.vertices_end(); ++v_it) {
+			OMesh::Point new_vert = inner_mesh.point(*v_it);
+			OMesh::Normal new_normal = inner_mesh.normal(*v_it);
+			OMesh::TexCoord2D new_tex = inner_mesh.texcoord2D(*v_it);
+
+			Vertex vert = Vertex(vec3(new_vert[0], new_vert[1], new_vert[2]), vec3(new_normal[0], new_normal[1], new_normal[2]), vec3(0, 0, 0), vec2(new_tex[0], new_tex[1]));
+			vertex_map[vert] = *v_it;
+		}
+		use_vertex_map = true;
+	}
+
 	void Append(Cluster& cluster) {
 		this->error += cluster.error;
 		for (OMesh::FaceIter fi_other(cluster.inner_mesh.faces_begin()); fi_other != cluster.inner_mesh.faces_end(); ++fi_other) {
@@ -109,7 +160,7 @@ public:
 		error += StaticDecimator::DecimateClusterUntil(inner_mesh, 256);
 	}
 
-	const virtual std::vector<Vertex> GetVertices() {
+	const virtual std::vector<Vertex>& GetVertices() {
 		//std::vector<Vertex> retval;
 
 		//for (OMesh::VertexIter v_it(inner_mesh.vertices_begin()); v_it != inner_mesh.vertices_end(); ++v_it) {
@@ -133,7 +184,11 @@ public:
 		return inner_static_mesh.GetVertices();
 	}
 
-	bool ShouldShow(float metric, Cluster& parent) {
+	const virtual std::vector<Face>& GetFaces() {
+		return inner_static_mesh.GetFaces();
+	}
+
+	bool ShouldShow(float metric) {
 		//if (marked)
 		//	return true;
 		//else
@@ -153,6 +208,10 @@ public:
 
 		// Prone to error, but looks good on dragon mesh
 		return error * childsib_triangle_density < calc_metric;
+	}
+
+	float GetMetric() {
+		return error * childsib_triangle_density;
 	}
 
 	LodDecision IsUpdateRequired(float center_distance_from_camera) {
@@ -601,6 +660,10 @@ public:
 
 	}
 
+	void SetRandomColor() {
+		inner_static_mesh.SetRandomVertexColor();
+	}
+
 	void Finalize() {
 		for (OMesh::VertexIter v_i(inner_mesh.vertices_begin()); v_i != inner_mesh.vertices_end(); ++v_i) {
 			auto& position = inner_mesh.point(*v_i);
@@ -631,6 +694,10 @@ public:
 			}
 			inner_static_mesh.AddFace(face);
 		}
+	}
+
+	void SetFaces(const std::vector<Face> faces) {
+		inner_static_mesh.SetFaces(faces);
 	}
 
 	void SetParentalDensity(float density) {
@@ -667,6 +734,10 @@ public:
 
 	float GetSurfaceArea() {
 		return inner_static_mesh.GetSurfaceArea();
+	}
+
+	float GetSurfaceArea(const std::vector<Vertex>& provided_vertices) {
+		return inner_static_mesh.GetSurfaceArea(provided_vertices);
 	}
 
 	void Mark() {

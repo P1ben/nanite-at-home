@@ -23,7 +23,7 @@ private:
 public:
     ThreadPool() {}
     void Start();
-    void QueueJob(const std::function<void(void*)>& job);
+    void QueueJob(const std::function<void(void*)> job);
 
     template <class T>
     void QueueJob(const std::function<void(void*)>& job, const T& args) {

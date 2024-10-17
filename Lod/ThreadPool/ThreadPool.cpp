@@ -36,7 +36,7 @@ void ThreadPool::Start() {
 	}
 }
 
-void ThreadPool::QueueJob(const std::function<void(void*)>& job) {
+void ThreadPool::QueueJob(const std::function<void(void*)> job) {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
         jobs.push(std::pair<std::function<void(void*)>, void*>(job, nullptr));
@@ -72,6 +72,7 @@ bool ThreadPool::IsIdle() {
         std::unique_lock<std::mutex> lock_counter(counter_mutex);
 
         is_idle = jobs.empty() && (busy_threads == 0);
+        printf("Job queue is: %s, busy thread count is: %d\n", jobs.empty() ? "Empty" : "Not empty", busy_threads);
     }
     return is_idle;
 }

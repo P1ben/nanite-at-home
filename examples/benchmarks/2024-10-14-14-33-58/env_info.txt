@@ -1,0 +1,13 @@
+CPU: 28 cores
+RAM: 32537 MB
+GPU: NVIDIA GeForce RTX 4070 Ti SUPER/PCIe/SSE2
+OpenGL Version: 4.3.0 NVIDIA 565.90
+Stationary sample time: 2 s
+Universal copy count: 200
+Universal copy distance: 1
+Moving animation time: 10 s
+Number of distances: 39
+Start distance: 1.000000
+End distance: 20.000000
+Distance step: 0.500000
+Loaded mesh: Axe

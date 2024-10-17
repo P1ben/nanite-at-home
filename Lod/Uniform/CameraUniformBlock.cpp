@@ -18,7 +18,7 @@ enum : uint32_t {
     CAMERA_POSITION_OFFSET      = PROJ_MATRIX_OFFSET + sizeof(mat4),
 };
 
-static constexpr uint32_t CAMERA_BINDING_POINT = 1;
+static constexpr uint32_t CAMERA_BINDING_POINT = 2;
 
 CameraUniformBlock::CameraUniformBlock() {
     uint32_t mat4_size = sizeof(mat4);

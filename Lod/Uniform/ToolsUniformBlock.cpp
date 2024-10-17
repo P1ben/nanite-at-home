@@ -16,7 +16,7 @@ enum : uint32_t {
     UV_Y_OFFSET_OFFSET = UV_X_OFFSET_OFFSET + 4,
 };
 
-static constexpr uint32_t TOOLS_BINDING_POINT = 3;
+static constexpr uint32_t TOOLS_BINDING_POINT = 4;
 
 ToolsUniformBlock::ToolsUniformBlock() {
     uint32_t float_size = 4;

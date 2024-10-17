@@ -25,7 +25,7 @@ enum : uint32_t {
 	USE_OBJECT_SPACE_NORMAL_TEXTURE_OFFSET = USE_COLOR_TEXTURE_OFFSET + 4,
 };
 
-static constexpr uint32_t OBJECT3D_BINDING_POINT = 2;
+static constexpr uint32_t OBJECT3D_BINDING_POINT = 3;
 
 Object3DUniformBlock::Object3DUniformBlock() {
 	uint32_t mat4_size = sizeof(mat4);
@@ -67,5 +67,5 @@ void Object3DUniformBlock::SetUseColorTexture(bool useColorTexture){
 
 void Object3DUniformBlock::SetUseObjectSpaceNormalTexture(bool useObjectSpaceNormalTexture){
 	unibuffer->SetValue(USE_OBJECT_SPACE_NORMAL_TEXTURE_OFFSET, useObjectSpaceNormalTexture);
-	printf("Normal offset: %u\n", USE_OBJECT_SPACE_NORMAL_TEXTURE_OFFSET);
+	//printf("Normal offset: %u\n", USE_OBJECT_SPACE_NORMAL_TEXTURE_OFFSET);
 }

@@ -101,6 +101,9 @@ StyleCopReport.xml
 # Make exception for examples folder
 !examples/**/*.obj
 
+# Exclude presentation folder
+pres/
+
 # Chutzpah Test files
 _Chutzpah*
 

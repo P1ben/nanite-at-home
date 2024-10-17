@@ -139,6 +139,8 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClCompile Include="3pp\stb_image.cpp" />
     <ClCompile Include="3pp\stb_image_write.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Compute\ComputeShader.cpp" />
+    <ClCompile Include="Compute\NaniteRenderer.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
     <ClCompile Include="imgui\imgui_draw.cpp" />
@@ -159,13 +161,26 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClCompile Include="VecLib\VecLib.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Benchmark\Benchmark.h" />
+    <ClInclude Include="Benchmark\CSVWriter.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Compute\ClusterBuffer.h" />
+    <ClInclude Include="Compute\ComputeShader.h" />
+    <ClInclude Include="Compute\FloatBuffer.h" />
+    <ClInclude Include="Compute\NaniteRenderer.h" />
+    <ClInclude Include="Compute\FaceBuffer.h" />
+    <ClInclude Include="Compute\OutputFaceCountBuffer.h" />
+    <ClInclude Include="Compute\SSBO.h" />
+    <ClInclude Include="Compute\VertexBuffer.h" />
     <ClInclude Include="Decimator.h" />
     <ClInclude Include="Decimator2.h" />
     <ClInclude Include="EdgeCollection.h" />
     <ClInclude Include="Face.h" />
     <ClInclude Include="FaceGroup.h" />
     <ClInclude Include="Framebuffer\Framebuffer.h" />
+    <ClInclude Include="Metrics\FPSCounter.h" />
+    <ClInclude Include="Metrics\ImageErrorCalculator.h" />
+    <ClInclude Include="Metrics\Timer.h" />
     <ClInclude Include="ObjReader\ObjReader.h" />
     <ClInclude Include="Texture\ColorMap.h" />
     <ClInclude Include="Texture\ObjectSpaceNormalMap.h" />
@@ -195,6 +210,7 @@ copy "$(SolutionDir)\libraries\GLEW\lib\dll\glew32.dll" "$(TargetDir)"</Command>
     <ClInclude Include="Uniform\Object3DUniformBlock.h" />
     <ClInclude Include="Uniform\ToolsUniformBlock.h" />
     <ClInclude Include="Uniform\UniformBuffer.h" />
+    <ClInclude Include="UpdateQueue.h" />
     <ClInclude Include="VecLib\VecLib.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
